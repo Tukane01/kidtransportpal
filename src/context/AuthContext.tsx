@@ -1,19 +1,11 @@
+
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { toast } from "sonner";
+import { useSupabaseAuth, UserProfile, UserRole, Car } from "./SupabaseAuthContext";
 
-export type UserRole = "parent" | "driver";
+export type { UserRole, Car };
 
-export interface Car {
-  id: string;
-  make: string;
-  model: string;
-  registrationNumber: string;
-  color: string;
-  vinNumber: string;
-  ownerIdNumber: string;
-}
-
-export interface User {
+export interface User extends UserProfile {
   id: string;
   email: string;
   role: UserRole;
@@ -34,211 +26,87 @@ interface AuthContextType {
   registerUser: (userData: Partial<User> & { password: string }) => Promise<boolean>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => Promise<boolean>;
-  updateUserProfile: (userData: Partial<User>) => Promise<boolean>;
+  updateUserProfile: (userData: Partial<User>) => Promise<boolean>; // Alias for updateUser
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user database for demonstration
-const MOCK_USERS: Record<string, User & { password: string }> = {
-  "parent@example.com": {
-    id: "parent-123",
-    email: "parent@example.com",
-    password: "Password123",
-    role: "parent",
-    name: "John",
-    surname: "Parent",
-    phone: "0821234567",
-    idNumber: "7001015800085",
-    walletBalance: 500,
-    profileImage: "https://i.pravatar.cc/150?img=3"
-  },
-  "driver@example.com": {
-    id: "driver-456",
-    email: "driver@example.com",
-    password: "Password123",
-    role: "driver",
-    name: "Sarah",
-    surname: "Driver",
-    phone: "0731234567",
-    idNumber: "8503125800088",
-    walletBalance: 200,
-    profileImage: "https://i.pravatar.cc/150?img=5",
-    cars: [
-      {
-        id: "car-123",
-        make: "Toyota",
-        model: "Corolla",
-        registrationNumber: "CA123456",
-        color: "Silver",
-        vinNumber: "JTDBR32E550012345",
-        ownerIdNumber: "8503125800088"
-      }
-    ]
-  }
-};
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { 
+    user: supabaseUser, 
+    profile,
+    isAuthenticated: supabaseIsAuthenticated, 
+    isLoading: supabaseIsLoading,
+    signIn, 
+    signInWithGoogle, 
+    signUp,
+    signOut,
+    updateProfile
+  } = useSupabaseAuth();
+  
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Check for existing session
+  // Convert Supabase user and profile to our app's User type
   useEffect(() => {
-    const storedUser = localStorage.getItem("schoolRideUser");
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setCurrentUser(parsedUser);
-      } catch (error) {
-        console.error("Failed to parse stored user:", error);
-        localStorage.removeItem("schoolRideUser");
-      }
+    if (supabaseUser && profile) {
+      const appUser: User = {
+        id: supabaseUser.id,
+        email: supabaseUser.email || "",
+        ...profile,
+      };
+      
+      setCurrentUser(appUser);
+    } else {
+      setCurrentUser(null);
     }
-    setIsLoading(false);
-    
-    // Set up session expiry (24 hours)
-    const sessionTimeout = setTimeout(() => {
-      logout();
-      toast.info("Your session has expired. Please log in again.");
-    }, 24 * 60 * 60 * 1000); // 24 hours
-    
-    return () => clearTimeout(sessionTimeout);
-  }, []);
+  }, [supabaseUser, profile]);
 
   const login = async (email: string, password: string, googleUser?: { name: string; email: string; profilePicture?: string }): Promise<boolean> => {
-    setIsLoading(true);
     try {
-      // Mock API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Handle Google sign-in
       if (googleUser) {
-        // Create a user account for Google users if they don't exist
-        if (!MOCK_USERS[email.toLowerCase()]) {
-          const [firstName, ...lastNameParts] = googleUser.name.split(' ');
-          const newGoogleUser: User & { password: string } = {
-            id: `google-${Date.now()}`,
-            email: email.toLowerCase(),
-            password: "google-auth-" + Date.now(), // Not used for auth, just for the mock data structure
-            role: "parent", // Default role
-            name: firstName || "Google",
-            surname: lastNameParts.join(' ') || "User",
-            phone: "",
-            idNumber: "",
-            walletBalance: 0,
-            profileImage: googleUser.profilePicture
-          };
-          
-          // Add to mock DB
-          MOCK_USERS[email.toLowerCase()] = newGoogleUser;
-        }
-        
-        // Get the user (either existing or newly created)
-        const user = MOCK_USERS[email.toLowerCase()];
-        const { password: _, ...userWithoutPassword } = user;
-        
-        setCurrentUser(userWithoutPassword);
-        localStorage.setItem("schoolRideUser", JSON.stringify(userWithoutPassword));
-        toast.success(`Welcome, ${user.name}!`);
-        return true;
-      }
-      
-      // Regular email/password login
-      const user = MOCK_USERS[email.toLowerCase()];
-      
-      if (user && user.password === password) {
-        const { password: _, ...userWithoutPassword } = user;
-        setCurrentUser(userWithoutPassword);
-        localStorage.setItem("schoolRideUser", JSON.stringify(userWithoutPassword));
-        toast.success(`Welcome back, ${user.name}!`);
-        return true;
+        const { error } = await signInWithGoogle();
+        return !error;
       } else {
-        toast.error("Invalid email or password");
-        return false;
+        const { error } = await signIn(email, password);
+        return !error;
       }
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login failed. Please try again later.");
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const registerUser = async (userData: Partial<User> & { password: string }): Promise<boolean> => {
-    setIsLoading(true);
     try {
-      // Mock API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { password, ...profileData } = userData;
       
-      // Check if user already exists
-      if (userData.email && MOCK_USERS[userData.email.toLowerCase()]) {
-        toast.error("User with this email already exists");
-        return false;
-      }
+      const { error } = await signUp(
+        userData.email || "", 
+        password,
+        profileData
+      );
       
-      // In a real app, this would call a backend API
-      const newUser: User & { password: string } = {
-        id: `user-${Date.now()}`,
-        email: userData.email || "",
-        password: userData.password,
-        role: userData.role || "parent",
-        name: userData.name || "",
-        surname: userData.surname || "",
-        phone: userData.phone || "",
-        idNumber: userData.idNumber || "",
-        walletBalance: 0,
-        ...userData
-      };
-      
-      // Save to mock DB
-      if (newUser.email) {
-        MOCK_USERS[newUser.email.toLowerCase()] = newUser;
-      }
-      
-      // Save without password to state and localStorage
-      const { password: _, ...userWithoutPassword } = newUser;
-      setCurrentUser(userWithoutPassword);
-      localStorage.setItem("schoolRideUser", JSON.stringify(userWithoutPassword));
-      
-      toast.success("Registration successful!");
-      return true;
+      return !error;
     } catch (error) {
       console.error("Registration error:", error);
       toast.error("Registration failed. Please try again later.");
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem("schoolRideUser");
-    toast.info("You have been logged out");
+  const logout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Logout failed. Please try again later.");
+    }
   };
 
   const updateUser = async (userData: Partial<User>): Promise<boolean> => {
     try {
-      if (!currentUser) return false;
-      
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const updatedUser = { ...currentUser, ...userData };
-      setCurrentUser(updatedUser);
-      localStorage.setItem("schoolRideUser", JSON.stringify(updatedUser));
-      
-      // Update mock DB
-      if (updatedUser.email && MOCK_USERS[updatedUser.email]) {
-        MOCK_USERS[updatedUser.email] = {
-          ...MOCK_USERS[updatedUser.email],
-          ...userData
-        };
-      }
-      
-      toast.success("Profile updated successfully");
-      return true;
+      return await updateProfile(userData);
     } catch (error) {
       console.error("Update user error:", error);
       toast.error("Failed to update profile");
@@ -246,12 +114,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Alias for updateUser
   const updateUserProfile = updateUser;
 
   const value = {
     currentUser,
-    isAuthenticated: !!currentUser,
-    isLoading,
+    isAuthenticated: supabaseIsAuthenticated,
+    isLoading: supabaseIsLoading,
     login,
     registerUser,
     logout,

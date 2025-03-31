@@ -45,7 +45,7 @@ const ChildForm: React.FC<ChildFormProps> = ({ onComplete, onCancel }) => {
     
     try {
       // Ensure all required fields are present
-      const childData: Omit<Child, "id"> = {
+      const childData = {
         name: values.name,
         surname: values.surname,
         idNumber: values.idNumber,

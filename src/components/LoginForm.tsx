@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { loginSchema } from "@/utils/validation";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { googleSignIn } from "@/utils/authUtils";
 
 const LoginForm: React.FC = () => {
   const { login } = useAuth();
@@ -47,14 +46,7 @@ const LoginForm: React.FC = () => {
     setLoginError("");
     
     try {
-      const result = await googleSignIn();
-      if (result.success && result.user) {
-        // Use the login function from AuthContext to set the user session
-        // For now, we'll use a mock email/password - in a real app, you'd handle this differently
-        await login(result.user.email, "google-auth-token", result.user);
-      } else {
-        setLoginError(result.error || "Failed to sign in with Google");
-      }
+      await login("", "", { name: "", email: "" });
     } catch (error) {
       setLoginError("An error occurred during Google sign-in");
       console.error(error);

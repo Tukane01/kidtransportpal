@@ -9,7 +9,84 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      cars: {
+        Row: {
+          color: string
+          created_at: string | null
+          id: string
+          make: string
+          model: string
+          owner_id: string | null
+          owner_id_number: string
+          registration_number: string
+          updated_at: string | null
+          vin_number: string
+        }
+        Insert: {
+          color: string
+          created_at?: string | null
+          id?: string
+          make: string
+          model: string
+          owner_id?: string | null
+          owner_id_number: string
+          registration_number: string
+          updated_at?: string | null
+          vin_number: string
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          make?: string
+          model?: string
+          owner_id?: string | null
+          owner_id_number?: string
+          registration_number?: string
+          updated_at?: string | null
+          vin_number?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          id_number: string | null
+          name: string | null
+          phone: string | null
+          profile_image: string | null
+          role: string
+          surname: string | null
+          updated_at: string | null
+          wallet_balance: number
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          id_number?: string | null
+          name?: string | null
+          phone?: string | null
+          profile_image?: string | null
+          role?: string
+          surname?: string | null
+          updated_at?: string | null
+          wallet_balance?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          id_number?: string | null
+          name?: string | null
+          phone?: string | null
+          profile_image?: string | null
+          role?: string
+          surname?: string | null
+          updated_at?: string | null
+          wallet_balance?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

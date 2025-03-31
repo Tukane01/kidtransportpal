@@ -53,7 +53,7 @@ const ParentRegisterForm: React.FC = () => {
       const success = await registerUser({
         role: "parent",
         email: values.email,
-        password: values.password, // Now explicitly passing password
+        password: values.password,
         name: values.name,
         surname: values.surname,
         phone: values.phone,

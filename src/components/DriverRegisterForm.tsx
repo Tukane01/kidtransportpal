@@ -61,7 +61,7 @@ const DriverRegisterForm: React.FC = () => {
       const success = await registerUser({
         role: "driver",
         email: values.email,
-        password: values.password, // Now explicitly passing password
+        password: values.password,
         name: values.name,
         surname: values.surname,
         phone: values.phone,

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
-import { Camera, User, Car, CheckCircle } from "lucide-react";
+import { Camera, User, Car as CarIcon, CheckCircle } from "lucide-react";
 import { 
   Form,
   FormControl,
@@ -21,7 +22,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 
 const DriverProfile: React.FC = () => {
-  const { currentUser, updateUserProfile } = useAuth();
+  const { currentUser, updateUser } = useAuth();
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -55,7 +56,7 @@ const DriverProfile: React.FC = () => {
     try {
       // In a real app, you would update the user profile in the backend
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      await updateUserProfile(data);
+      await updateUser(data);
       setIsEditMode(false);
       toast.success("Profile updated successfully");
     } catch (error) {
