@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,18 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Custom colors for our application
+				schoolride: {
+					primary: '#4361EE',
+					secondary: '#3F37C9',
+					accent: '#F72585',
+					success: '#4CC9F0',
+					warning: '#F72585',
+					background: '#F8F9FA',
+					card: '#FFFFFF',
+					text: '#212529',
+					lightText: '#6C757D'
 				}
 			},
 			borderRadius: {
@@ -84,11 +97,46 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					},
+					'100%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					}
+				},
+				'fade-out': {
+					'0%': {
+						opacity: '1',
+						transform: 'translateY(0)'
+					},
+					'100%': {
+						opacity: '0',
+						transform: 'translateY(10px)'
+					}
+				},
+				'pulse-slow': {
+					'0%, 100%': {
+						opacity: '1'
+					},
+					'50%': {
+						opacity: '0.5'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.3s ease-out',
+				'fade-out': 'fade-out 0.3s ease-out',
+				'pulse-slow': 'pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+			},
+			fontFamily: {
+				sans: ['Inter', 'sans-serif'],
+				heading: ['Poppins', 'sans-serif']
 			}
 		}
 	},
