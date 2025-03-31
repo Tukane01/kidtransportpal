@@ -3,6 +3,16 @@ import { toast } from "sonner";
 
 export type UserRole = "parent" | "driver";
 
+export interface Car {
+  id: string;
+  make: string;
+  model: string;
+  registrationNumber: string;
+  color: string;
+  vinNumber: string;
+  ownerIdNumber: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -13,6 +23,7 @@ export interface User {
   idNumber: string;
   walletBalance: number;
   profileImage?: string;
+  cars?: Car[];
 }
 
 interface AuthContextType {
@@ -23,6 +34,7 @@ interface AuthContextType {
   registerUser: (userData: Partial<User> & { password: string }) => Promise<boolean>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => Promise<boolean>;
+  updateUserProfile: (userData: Partial<User>) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,7 +63,18 @@ const MOCK_USERS: Record<string, User & { password: string }> = {
     phone: "0731234567",
     idNumber: "8503125800088",
     walletBalance: 200,
-    profileImage: "https://i.pravatar.cc/150?img=5"
+    profileImage: "https://i.pravatar.cc/150?img=5",
+    cars: [
+      {
+        id: "car-123",
+        make: "Toyota",
+        model: "Corolla",
+        registrationNumber: "CA123456",
+        color: "Silver",
+        vinNumber: "JTDBR32E550012345",
+        ownerIdNumber: "8503125800088"
+      }
+    ]
   }
 };
 
@@ -223,6 +246,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateUserProfile = updateUser;
+
   const value = {
     currentUser,
     isAuthenticated: !!currentUser,
@@ -230,7 +255,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     registerUser,
     logout,
-    updateUser
+    updateUser,
+    updateUserProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

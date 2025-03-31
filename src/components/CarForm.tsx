@@ -10,6 +10,7 @@ import { carRegistrationSchema } from "@/utils/validation";
 import { Loader2 } from "lucide-react";
 import { useRide } from "@/context/RideContext";
 import { toast } from "sonner";
+import { Car } from "@/context/AuthContext";
 
 interface CarFormProps {
   onComplete: () => void;
@@ -43,7 +44,17 @@ const CarForm: React.FC<CarFormProps> = ({ onComplete, onCancel, driverIdNumber 
         return;
       }
       
-      await addCar(values);
+      // Ensure all required fields are present
+      const carData: Omit<Car, "id"> = {
+        make: values.make,
+        model: values.model,
+        registrationNumber: values.registrationNumber,
+        color: values.color,
+        vinNumber: values.vinNumber,
+        ownerIdNumber: values.ownerIdNumber
+      };
+      
+      await addCar(carData);
       onComplete();
     } catch (error) {
       console.error("Error adding car:", error);

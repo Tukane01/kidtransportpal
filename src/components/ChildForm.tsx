@@ -10,6 +10,16 @@ import { childRegistrationSchema } from "@/utils/validation";
 import { Loader2 } from "lucide-react";
 import { useRide } from "@/context/RideContext";
 
+// Define the Child interface
+export interface Child {
+  id: string;
+  name: string;
+  surname: string;
+  idNumber: string;
+  schoolName: string;
+  schoolAddress: string;
+}
+
 interface ChildFormProps {
   onComplete: () => void;
   onCancel: () => void;
@@ -34,7 +44,16 @@ const ChildForm: React.FC<ChildFormProps> = ({ onComplete, onCancel }) => {
     setIsSubmitting(true);
     
     try {
-      await addChild(values);
+      // Ensure all required fields are present
+      const childData: Omit<Child, "id"> = {
+        name: values.name,
+        surname: values.surname,
+        idNumber: values.idNumber,
+        schoolName: values.schoolName,
+        schoolAddress: values.schoolAddress
+      };
+      
+      await addChild(childData);
       onComplete();
     } catch (error) {
       console.error("Error adding child:", error);
