@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import DriverSidebar from "./DriverSidebar";
+import { Logo } from "@/components/Logo";
 
 const DriverHeader: React.FC = () => {
   const { currentUser } = useAuth();
@@ -33,9 +34,7 @@ const DriverHeader: React.FC = () => {
               </SheetContent>
             </Sheet>
             
-            <h1 className="text-xl font-bold font-heading text-schoolride-primary hidden md:block">
-              SchoolRideApp
-            </h1>
+            <Logo simpleLogo className="hidden md:flex" />
           </div>
           
           <div className="flex items-center gap-2">

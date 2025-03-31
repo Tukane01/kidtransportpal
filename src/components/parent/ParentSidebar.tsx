@@ -26,7 +26,7 @@ const ParentSidebar: React.FC = () => {
   return (
     <div className="w-64 hidden md:flex flex-col bg-white shadow-md h-screen">
       <div className="p-4 flex justify-center">
-        <Logo className="h-16" />
+        <Logo className="h-24" />
       </div>
       
       <div className="p-4 border-b">
