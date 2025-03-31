@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { toast } from "sonner";
 
@@ -20,7 +19,7 @@ interface AuthContextType {
   currentUser: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string, googleUser?: { name: string; email: string; profilePicture?: string }) => Promise<boolean>;
   registerUser: (userData: Partial<User> & { password: string }) => Promise<boolean>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => Promise<boolean>;
@@ -83,12 +82,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => clearTimeout(sessionTimeout);
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string, googleUser?: { name: string; email: string; profilePicture?: string }): Promise<boolean> => {
     setIsLoading(true);
     try {
       // Mock API call delay
       await new Promise(resolve => setTimeout(resolve, 800));
       
+      // Handle Google sign-in
+      if (googleUser) {
+        // Create a user account for Google users if they don't exist
+        if (!MOCK_USERS[email.toLowerCase()]) {
+          const [firstName, ...lastNameParts] = googleUser.name.split(' ');
+          const newGoogleUser: User & { password: string } = {
+            id: `google-${Date.now()}`,
+            email: email.toLowerCase(),
+            password: "google-auth-" + Date.now(), // Not used for auth, just for the mock data structure
+            role: "parent", // Default role
+            name: firstName || "Google",
+            surname: lastNameParts.join(' ') || "User",
+            phone: "",
+            idNumber: "",
+            walletBalance: 0,
+            profileImage: googleUser.profilePicture
+          };
+          
+          // Add to mock DB
+          MOCK_USERS[email.toLowerCase()] = newGoogleUser;
+        }
+        
+        // Get the user (either existing or newly created)
+        const user = MOCK_USERS[email.toLowerCase()];
+        const { password: _, ...userWithoutPassword } = user;
+        
+        setCurrentUser(userWithoutPassword);
+        localStorage.setItem("schoolRideUser", JSON.stringify(userWithoutPassword));
+        toast.success(`Welcome, ${user.name}!`);
+        return true;
+      }
+      
+      // Regular email/password login
       const user = MOCK_USERS[email.toLowerCase()];
       
       if (user && user.password === password) {
