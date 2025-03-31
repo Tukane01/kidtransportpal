@@ -26,7 +26,6 @@ const AuthWrapper: React.FC = () => {
       <Card className="w-full max-w-md shadow-lg animate-fade-in">
         <CardHeader className="space-y-1 flex flex-col items-center">
           <Logo className="h-16 mb-4" />
-          <CardTitle className="text-2xl text-center font-heading font-bold">SchoolRideApp</CardTitle>
           <CardDescription className="text-center">
             Safe transportation for your children
           </CardDescription>
@@ -77,7 +76,7 @@ const AuthWrapper: React.FC = () => {
         </CardContent>
         <CardFooter className="flex justify-center">
           <small className="text-muted-foreground text-center">
-            &copy; {new Date().getFullYear()} SchoolRideApp. All rights reserved.
+            &copy; {new Date().getFullYear()} Ride2School. All rights reserved.
           </small>
         </CardFooter>
       </Card>

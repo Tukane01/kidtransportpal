@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -63,14 +62,13 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Custom colors for our application
 				schoolride: {
-					primary: '#4361EE',
-					secondary: '#3F37C9',
+					primary: '#2276FC',
+					secondary: '#0E5ED5',
 					accent: '#F72585',
 					success: '#4CC9F0',
 					warning: '#F72585',
-					background: '#F8F9FA',
+					background: '#EBF3FF',
 					card: '#FFFFFF',
 					text: '#212529',
 					lightText: '#6C757D'
