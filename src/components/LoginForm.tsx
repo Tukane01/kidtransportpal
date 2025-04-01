@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -11,7 +12,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const LoginForm: React.FC = () => {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -47,7 +48,11 @@ const LoginForm: React.FC = () => {
     setLoginError("");
     
     try {
-      await login("", "", { name: "", email: "" });
+      // Now using the proper loginWithGoogle function
+      const success = await loginWithGoogle();
+      if (success) {
+        navigate("/dashboard");
+      }
     } catch (error) {
       setLoginError("An error occurred during Google sign-in");
       console.error(error);

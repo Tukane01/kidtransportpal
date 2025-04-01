@@ -23,6 +23,7 @@ interface AuthContextType {
   currentUser: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
+  loginWithGoogle: () => Promise<boolean>;
   register: (userData: any) => Promise<boolean>;
   logout: () => void;
   updateUserProfile: (data: Partial<User>) => Promise<boolean>;
@@ -36,6 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     profile,
     signIn,
+    signInWithGoogle,
     signUp,
     signOut,
     isLoading: supabaseLoading,
@@ -77,6 +79,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
       toast.success("Login successful!");
+      return true;
+    } catch (error: any) {
+      toast.error(error.message);
+      return false;
+    }
+  };
+
+  const loginWithGoogle = async () => {
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
       return true;
     } catch (error: any) {
       toast.error(error.message);
@@ -163,6 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     currentUser,
     isLoading,
     login,
+    loginWithGoogle,
     register,
     logout,
     updateUserProfile,
