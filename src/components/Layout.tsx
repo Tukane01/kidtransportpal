@@ -4,7 +4,6 @@ import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 import ParentDashboard from "./parent/ParentDashboard";
 import DriverDashboard from "./driver/DriverDashboard";
-import AuthWrapper from "./AuthWrapper";
 import { useNavigate } from "react-router-dom";
 
 const Layout: React.FC = () => {
@@ -14,9 +13,13 @@ const Layout: React.FC = () => {
   // Refresh user profile data when layout component mounts
   useEffect(() => {
     if (isAuthenticated && currentUser) {
-      refreshUserProfile();
+      refreshUserProfile().catch(error => {
+        console.error("Error refreshing profile:", error);
+      });
+    } else if (!isAuthenticated && !isLoading) {
+      navigate('/auth');
     }
-  }, [isAuthenticated, currentUser, refreshUserProfile]);
+  }, [isAuthenticated, currentUser, refreshUserProfile, isLoading, navigate]);
   
   if (isLoading) {
     return (
@@ -27,7 +30,7 @@ const Layout: React.FC = () => {
   }
   
   if (!isAuthenticated) {
-    return <AuthWrapper />;
+    return null; // We're redirecting in the useEffect, so just return null
   }
   
   return currentUser?.role === "parent" ? <ParentDashboard /> : <DriverDashboard />;

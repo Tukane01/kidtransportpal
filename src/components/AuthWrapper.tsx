@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,10 +8,20 @@ import LoginForm from "@/components/LoginForm";
 import RegisterOptions from "@/components/RegisterOptions";
 import ParentRegisterForm from "@/components/ParentRegisterForm";
 import DriverRegisterForm from "@/components/DriverRegisterForm";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const AuthWrapper: React.FC = () => {
   const [activeTab, setActiveTab] = useState("login");
   const [registerType, setRegisterType] = useState<"select" | "parent" | "driver">("select");
+  const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   const handleRegisterTypeSelect = (type: "parent" | "driver") => {
     setRegisterType(type);
@@ -20,6 +30,18 @@ const AuthWrapper: React.FC = () => {
   const handleBackToOptions = () => {
     setRegisterType("select");
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-schoolride-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return null; // We're redirecting in useEffect
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-schoolride-background p-4">
