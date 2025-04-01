@@ -34,7 +34,7 @@ const profileSchema = z.object({
 });
 
 const ParentProfile: React.FC = () => {
-  const { currentUser, updateUser } = useAuth();
+  const { currentUser, updateUserProfile } = useAuth();
   const { children, deleteChild } = useRide();
   const [isLoading, setIsLoading] = useState(false);
   const [childToDelete, setChildToDelete] = useState<Child | null>(null);
@@ -54,7 +54,7 @@ const ParentProfile: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const success = await updateUser(values);
+      const success = await updateUserProfile(values);
       
       if (success) {
         toast.success("Profile updated successfully");

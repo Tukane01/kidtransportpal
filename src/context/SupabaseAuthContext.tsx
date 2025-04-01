@@ -20,8 +20,8 @@ export interface UserProfile {
   id: string;
   name: string;
   surname: string;
-  phone: string;
-  idNumber: string;
+  phone?: string;
+  idNumber?: string;
   walletBalance: number;
   profileImage?: string;
   role: UserRole;
@@ -34,11 +34,11 @@ interface AuthContextType {
   profile: UserProfile | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any | null }>;
+  signIn: ({ email, password }: { email: string; password: string }) => Promise<{ error: any | null }>;
   signInWithGoogle: () => Promise<{ error: any | null }>;
-  signUp: (email: string, password: string, userData: Partial<UserProfile>) => Promise<{ error: any | null }>;
-  signOut: () => Promise<void>;
-  updateProfile: (userData: Partial<UserProfile>) => Promise<boolean>;
+  signUp: ({ email, password, options }: { email: string; password: string; options?: { data: any } }) => Promise<{ error: any | null }>;
+  signOut: () => Promise<{ error: any | null }>;
+  updateProfile: (userData: Partial<UserProfile>) => Promise<{ error: any | null }>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -64,6 +64,18 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return null;
       }
 
+      // Map database fields to our UserProfile interface
+      const userProfile: UserProfile = {
+        id: data.id,
+        name: data.name || '',
+        surname: data.surname || '',
+        phone: data.phone || '',
+        idNumber: data.id_number || '',
+        walletBalance: data.wallet_balance || 0,
+        profileImage: data.profile_image || '',
+        role: data.role as UserRole || 'parent',
+      };
+
       // If user is a driver, fetch their cars
       if (data && data.role === 'driver') {
         const { data: carsData, error: carsError } = await supabase
@@ -72,13 +84,22 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           .eq('owner_id', userId);
         
         if (!carsError && carsData) {
-          data.cars = carsData;
+          // Map database fields to our Car interface
+          userProfile.cars = carsData.map(car => ({
+            id: car.id,
+            make: car.make,
+            model: car.model,
+            registrationNumber: car.registration_number,
+            color: car.color,
+            vinNumber: car.vin_number,
+            ownerIdNumber: car.owner_id_number
+          }));
         } else if (carsError) {
           console.error("Error fetching cars:", carsError);
         }
       }
 
-      return data as UserProfile;
+      return userProfile;
     } catch (error) {
       console.error("Error in fetchProfile:", error);
       return null;
@@ -140,7 +161,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     initialize();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async ({ email, password }: { email: string; password: string }) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -183,18 +204,12 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
-  const signUp = async (email: string, password: string, userData: Partial<UserProfile>) => {
+  const signUp = async ({ email, password, options }: { email: string; password: string; options?: { data: any } }) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            name: userData.name,
-            surname: userData.surname,
-            role: userData.role || 'parent',
-          }
-        }
+        options
       });
 
       if (error) {
@@ -213,36 +228,51 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast.error(error.message);
+        return { error };
+      }
       toast.success("Signed out successfully");
+      return { error: null };
     } catch (error) {
       console.error("SignOut error:", error);
       toast.error("Failed to sign out");
+      return { error };
     }
   };
 
   const updateProfile = async (userData: Partial<UserProfile>) => {
-    if (!user) return false;
+    if (!user) return { error: 'No user is logged in' };
     
     try {
+      // Convert from our camelCase to snake_case for Supabase
+      const supabaseData: any = {};
+      if (userData.name !== undefined) supabaseData.name = userData.name;
+      if (userData.surname !== undefined) supabaseData.surname = userData.surname;
+      if (userData.phone !== undefined) supabaseData.phone = userData.phone;
+      if (userData.idNumber !== undefined) supabaseData.id_number = userData.idNumber;
+      if (userData.profileImage !== undefined) supabaseData.profile_image = userData.profileImage;
+      if (userData.walletBalance !== undefined) supabaseData.wallet_balance = userData.walletBalance;
+
       const { error } = await supabase
         .from('profiles')
-        .update(userData)
+        .update(supabaseData)
         .eq('id', user.id);
       
       if (error) {
         console.error("Error updating profile:", error);
         toast.error("Failed to update profile");
-        return false;
+        return { error };
       }
 
       await refreshProfile();
       toast.success("Profile updated successfully");
-      return true;
+      return { error: null };
     } catch (error) {
       console.error("Error in updateProfile:", error);
       toast.error("Failed to update profile");
-      return false;
+      return { error };
     }
   };
 

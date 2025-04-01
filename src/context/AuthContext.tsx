@@ -1,10 +1,11 @@
+
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { toast } from "sonner";
 import { useSupabaseAuth, UserProfile, UserRole, Car } from "./SupabaseAuthContext";
 
 export type { UserRole, Car };
 
-export interface User extends UserProfile {
+export interface User extends Omit<UserProfile, 'idNumber' | 'walletBalance'> {
   id: string;
   email?: string;
   name: string;
@@ -14,6 +15,7 @@ export interface User extends UserProfile {
   profileImage?: string;
   walletBalance: number;
   role: UserRole;
+  cars?: Car[];
 }
 
 interface AuthContextType {
@@ -32,6 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const {
     session,
     user,
+    profile,
     signIn,
     signUp,
     signOut,
@@ -44,17 +47,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     setIsLoading(true);
-    if (session && user) {
+    if (session && user && profile) {
       const userData: User = {
         id: user.id,
         email: user.email,
-        name: user.user_metadata.name || "No Name",
-        surname: user.user_metadata.surname || "No Surname",
-        phone: user.user_metadata.phone,
-        idNumber: user.user_metadata.idNumber,
-        profileImage: user.user_metadata.profileImage,
-        walletBalance: user.user_metadata.walletBalance || 0,
-        role: user.user_metadata.role || "parent",
+        name: profile.name || "No Name",
+        surname: profile.surname || "No Surname",
+        phone: profile.phone,
+        idNumber: profile.idNumber,
+        profileImage: profile.profileImage,
+        walletBalance: profile.walletBalance || 0,
+        role: profile.role || "parent",
+        cars: profile.cars
       };
       setCurrentUser(userData);
       setIsAuthenticated(true);
@@ -63,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsAuthenticated(false);
     }
     setIsLoading(supabaseLoading);
-  }, [session, user, supabaseLoading]);
+  }, [session, user, profile, supabaseLoading]);
 
   const login = async (email: string, password: string) => {
     try {
@@ -82,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (userData: any) => {
     try {
-      const { email, password, name, surname, role } = userData;
+      const { email, password, name, surname, role, phone, idNumber } = userData;
       const { error } = await signUp({
         email,
         password,
@@ -91,6 +95,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name,
             surname,
             role,
+            phone,
+            id_number: idNumber
           },
         },
       });
@@ -122,7 +128,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUserProfile = async (data: Partial<User>) => {
     try {
-      const { error } = await updateProfile(data);
+      // Convert from User interface to UserProfile interface
+      const profileData: Partial<UserProfile> = {};
+      if (data.name !== undefined) profileData.name = data.name;
+      if (data.surname !== undefined) profileData.surname = data.surname;
+      if (data.phone !== undefined) profileData.phone = data.phone;
+      if (data.idNumber !== undefined) profileData.idNumber = data.idNumber;
+      if (data.profileImage !== undefined) profileData.profileImage = data.profileImage;
+      if (data.walletBalance !== undefined) profileData.walletBalance = data.walletBalance;
+
+      const { error } = await updateProfile(profileData);
       if (error) {
         toast.error(error.message);
         return false;

@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { checkAgeFromIdNumber } from "@/utils/validation";
 
 const DriverRegisterForm: React.FC = () => {
-  const { registerUser } = useAuth();
+  const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [hasCar, setHasCar] = useState(false);
   const [showCarForm, setShowCarForm] = useState(false);
@@ -58,7 +58,7 @@ const DriverRegisterForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const success = await registerUser({
+      const success = await register({
         role: "driver",
         email: values.email,
         password: values.password,

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -9,10 +8,13 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { loginSchema } from "@/utils/validation";
 import { AlertCircle, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const LoginForm: React.FC = () => {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -26,16 +28,15 @@ const LoginForm: React.FC = () => {
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
-    setLoginError("");
     
     try {
       const success = await login(values.email, values.password);
-      if (!success) {
-        setLoginError("Invalid email or password");
+      
+      if (success) {
+        navigate("/dashboard");
       }
     } catch (error) {
-      setLoginError("An error occurred during login");
-      console.error(error);
+      console.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -86,7 +87,7 @@ const LoginForm: React.FC = () => {
               <FormControl>
                 <Input
                   placeholder="Enter your password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   {...field}
                   disabled={isLoading}
                 />
@@ -95,6 +96,14 @@ const LoginForm: React.FC = () => {
             </FormItem>
           )}
         />
+        
+        <Button
+          type="button"
+          className="w-full text-sm text-gray-500"
+          onClick={() => setShowPassword(!showPassword)}
+        >
+          {showPassword ? "Hide" : "Show"}
+        </Button>
         
         {loginError && (
           <div className="text-destructive text-sm flex items-center gap-2">

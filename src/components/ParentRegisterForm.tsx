@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -14,7 +13,7 @@ import ChildForm from "@/components/ChildForm";
 import { toast } from "sonner";
 
 const ParentRegisterForm: React.FC = () => {
-  const { registerUser } = useAuth();
+  const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [hasChild, setHasChild] = useState(false);
   const [showChildForm, setShowChildForm] = useState(false);
@@ -35,13 +34,11 @@ const ParentRegisterForm: React.FC = () => {
   });
   
   const onSubmit = async (values: z.infer<typeof parentRegistrationSchema>) => {
-    // If parent has a child but hasn't completed child form, show child form
     if (hasChild && !childFormCompleted) {
       setShowChildForm(true);
       return;
     }
     
-    // If parent doesn't have a child, reject registration
     if (!hasChild) {
       toast.error("You must have a child to register as a parent");
       return;
@@ -50,7 +47,7 @@ const ParentRegisterForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const success = await registerUser({
+      const success = await register({
         role: "parent",
         email: values.email,
         password: values.password,
@@ -79,7 +76,6 @@ const ParentRegisterForm: React.FC = () => {
   const handleChildFormComplete = () => {
     setChildFormCompleted(true);
     setShowChildForm(false);
-    // Now try to submit the parent form again
     form.handleSubmit(onSubmit)();
   };
   

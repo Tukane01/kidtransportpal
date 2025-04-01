@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 
 const DriverProfile: React.FC = () => {
-  const { currentUser, updateUser } = useAuth();
+  const { currentUser, updateUserProfile } = useAuth();
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -56,7 +55,7 @@ const DriverProfile: React.FC = () => {
     try {
       // In a real app, you would update the user profile in the backend
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      await updateUser(data);
+      await updateUserProfile(data);
       setIsEditMode(false);
       toast.success("Profile updated successfully");
     } catch (error) {
@@ -111,7 +110,7 @@ const DriverProfile: React.FC = () => {
                 
                 <div className="flex items-center">
                   <div className="h-10 w-10 rounded-full bg-schoolride-primary/10 flex items-center justify-center">
-                    <Car className="h-5 w-5 text-schoolride-primary" />
+                    <CarIcon className="h-5 w-5 text-schoolride-primary" />
                   </div>
                   <div className="ml-3">
                     <div className="text-sm text-muted-foreground">Driver Status</div>
