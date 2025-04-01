@@ -70,10 +70,10 @@ export default {
 					accent: '#F72585',
 					success: '#4CC9F0',
 					warning: '#F72585',
-					background: '#F8F9FA',
+					background: '#031a2c', // Updated to the requested dark blue
 					card: '#FFFFFF',
-					text: '#212529',
-					lightText: '#6C757D'
+					text: '#FFFFFF',  // Updated text color for better contrast on dark background
+					lightText: '#A3B8CC'  // Updated lighter text for better contrast on dark background
 				}
 			},
 			borderRadius: {

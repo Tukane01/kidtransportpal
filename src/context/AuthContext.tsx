@@ -1,9 +1,20 @@
 
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { toast } from "sonner";
-import { useSupabaseAuth, UserProfile, UserRole, Car } from "./SupabaseAuthContext";
+import { useSupabaseAuth, UserProfile, UserRole } from "./SupabaseAuthContext";
 
-export type { UserRole, Car };
+export type { UserRole };
+
+// Define the Car type since it's referenced but not exported from SupabaseAuthContext
+export interface Car {
+  id: string;
+  make: string;
+  model: string;
+  registrationNumber: string;
+  color: string;
+  vinNumber: string;
+  ownerIdNumber: string;
+}
 
 export interface User extends UserProfile {
   id: string;
