@@ -1,148 +1,162 @@
-
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { toast } from "sonner";
-import { useSupabaseAuth, UserProfile, UserRole } from "./SupabaseAuthContext";
+import { useSupabaseAuth, UserProfile, UserRole, Car } from "./SupabaseAuthContext";
 
-export type { UserRole };
-
-// Define the Car type since it's referenced but not exported from SupabaseAuthContext
-export interface Car {
-  id: string;
-  make: string;
-  model: string;
-  registrationNumber: string;
-  color: string;
-  vinNumber: string;
-  ownerIdNumber: string;
-}
+export type { UserRole, Car };
 
 export interface User extends UserProfile {
   id: string;
-  email: string;
-  role: UserRole;
+  email?: string;
   name: string;
   surname: string;
-  phone: string;
-  idNumber: string;
-  walletBalance: number;
+  phone?: string;
+  idNumber?: string;
   profileImage?: string;
-  cars?: Car[];
+  walletBalance: number;
+  role: UserRole;
 }
 
 interface AuthContextType {
-  currentUser: User | null;
   isAuthenticated: boolean;
+  currentUser: User | null;
   isLoading: boolean;
-  login: (email: string, password: string, googleUser?: { name: string; email: string; profilePicture?: string }) => Promise<boolean>;
-  registerUser: (userData: Partial<User> & { password: string }) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (userData: any) => Promise<boolean>;
   logout: () => void;
-  updateUser: (userData: Partial<User>) => Promise<boolean>;
-  updateUserProfile: (userData: Partial<User>) => Promise<boolean>; // Alias for updateUser
+  updateUserProfile: (data: Partial<User>) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { 
-    user: supabaseUser, 
-    profile,
-    isAuthenticated: supabaseIsAuthenticated, 
-    isLoading: supabaseIsLoading,
-    signIn, 
-    signInWithGoogle, 
+  const {
+    session,
+    user,
+    signIn,
     signUp,
     signOut,
-    updateProfile
+    isLoading: supabaseLoading,
+    updateProfile,
   } = useSupabaseAuth();
-  
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Convert Supabase user and profile to our app's User type
   useEffect(() => {
-    if (supabaseUser && profile) {
-      const appUser: User = {
-        id: supabaseUser.id,
-        email: supabaseUser.email || "",
-        ...profile,
+    setIsLoading(true);
+    if (session && user) {
+      const userData: User = {
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata.name || "No Name",
+        surname: user.user_metadata.surname || "No Surname",
+        phone: user.user_metadata.phone,
+        idNumber: user.user_metadata.idNumber,
+        profileImage: user.user_metadata.profileImage,
+        walletBalance: user.user_metadata.walletBalance || 0,
+        role: user.user_metadata.role || "parent",
       };
-      
-      setCurrentUser(appUser);
+      setCurrentUser(userData);
+      setIsAuthenticated(true);
     } else {
       setCurrentUser(null);
+      setIsAuthenticated(false);
     }
-  }, [supabaseUser, profile]);
+    setIsLoading(supabaseLoading);
+  }, [session, user, supabaseLoading]);
 
-  const login = async (email: string, password: string, googleUser?: { name: string; email: string; profilePicture?: string }): Promise<boolean> => {
+  const login = async (email: string, password: string) => {
     try {
-      if (googleUser) {
-        const { error } = await signInWithGoogle();
-        return !error;
-      } else {
-        const { error } = await signIn(email, password);
-        return !error;
+      const { error } = await signIn({ email, password });
+      if (error) {
+        toast.error(error.message);
+        return false;
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      toast.error("Login failed. Please try again later.");
+      toast.success("Login successful!");
+      return true;
+    } catch (error: any) {
+      toast.error(error.message);
       return false;
     }
   };
 
-  const registerUser = async (userData: Partial<User> & { password: string }): Promise<boolean> => {
+  const register = async (userData: any) => {
     try {
-      const { password, ...profileData } = userData;
-      
-      const { error } = await signUp(
-        userData.email || "", 
+      const { email, password, name, surname, role } = userData;
+      const { error } = await signUp({
+        email,
         password,
-        profileData
-      );
-      
-      return !error;
-    } catch (error) {
-      console.error("Registration error:", error);
-      toast.error("Registration failed. Please try again later.");
+        options: {
+          data: {
+            name,
+            surname,
+            role,
+          },
+        },
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      toast.success("Registration successful! Please check your email to verify your account.");
+      return true;
+    } catch (error: any) {
+      toast.error(error.message);
       return false;
     }
   };
 
   const logout = async () => {
     try {
-      await signOut();
-    } catch (error) {
-      console.error("Logout error:", error);
-      toast.error("Logout failed. Please try again later.");
+      const { error } = await signOut();
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Logout successful!");
+    } catch (error: any) {
+      toast.error(error.message);
     }
   };
 
-  const updateUser = async (userData: Partial<User>): Promise<boolean> => {
+  const updateUserProfile = async (data: Partial<User>) => {
     try {
-      return await updateProfile(userData);
-    } catch (error) {
-      console.error("Update user error:", error);
-      toast.error("Failed to update profile");
+      const { error } = await updateProfile(data);
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+
+      setCurrentUser((prevUser) => {
+        if (prevUser) {
+          return { ...prevUser, ...data } as User;
+        }
+        return prevUser;
+      });
+
+      toast.success("Profile updated successfully!");
+      return true;
+    } catch (error: any) {
+      toast.error(error.message);
       return false;
     }
   };
 
-  // Alias for updateUser
-  const updateUserProfile = updateUser;
-
-  const value = {
+  const value: AuthContextType = {
+    isAuthenticated,
     currentUser,
-    isAuthenticated: supabaseIsAuthenticated,
-    isLoading: supabaseIsLoading,
+    isLoading,
     login,
-    registerUser,
+    register,
     logout,
-    updateUser,
-    updateUserProfile
+    updateUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = (): AuthContextType => {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
