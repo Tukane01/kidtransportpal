@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
-import { Camera, User, Car as CarIcon, CheckCircle } from "lucide-react";
+import { Camera, User, Car as CarIcon, CheckCircle, RefreshCw } from "lucide-react";
 import { 
   Form,
   FormControl,
@@ -19,11 +19,23 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const DriverProfile: React.FC = () => {
-  const { currentUser, updateUserProfile } = useAuth();
+  const { currentUser, updateUserProfile, refreshUserProfile } = useAuth();
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const getInitials = () => {
     if (!currentUser?.name || !currentUser?.surname) return "U";
@@ -53,11 +65,12 @@ const DriverProfile: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // In a real app, you would update the user profile in the backend
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      await updateUserProfile(data);
-      setIsEditMode(false);
-      toast.success("Profile updated successfully");
+      const success = await updateUserProfile(data);
+      
+      if (success) {
+        setIsEditMode(false);
+        toast.success("Profile updated successfully");
+      }
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error("Failed to update profile");
@@ -65,10 +78,33 @@ const DriverProfile: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshUserProfile();
+      toast.success("Profile data refreshed");
+    } catch (error) {
+      console.error("Error refreshing profile:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
   
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold font-heading">Driver Profile</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold font-heading">Driver Profile</h1>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">

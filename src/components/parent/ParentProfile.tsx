@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { nameSchema, phoneSchema, emailSchema } from "@/utils/validation";
 import { useAuth } from "@/context/AuthContext";
 import { Child, useRide } from "@/context/RideContext";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ChildForm from "@/components/ChildForm";
@@ -34,9 +34,10 @@ const profileSchema = z.object({
 });
 
 const ParentProfile: React.FC = () => {
-  const { currentUser, updateUserProfile } = useAuth();
+  const { currentUser, updateUserProfile, refreshUserProfile } = useAuth();
   const { children, deleteChild } = useRide();
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [childToDelete, setChildToDelete] = useState<Child | null>(null);
   const [showAddChildDialog, setShowAddChildDialog] = useState(false);
   
@@ -83,10 +84,33 @@ const ParentProfile: React.FC = () => {
     setShowAddChildDialog(false);
     toast.success("Child added successfully");
   };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshUserProfile();
+      toast.success("Profile data refreshed");
+    } catch (error) {
+      console.error("Error refreshing profile:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
   
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold font-heading">My Profile</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold font-heading">My Profile</h1>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
       
       <Tabs defaultValue="personal">
         <TabsList className="mb-6">

@@ -1,13 +1,22 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 import ParentDashboard from "./parent/ParentDashboard";
 import DriverDashboard from "./driver/DriverDashboard";
 import AuthWrapper from "./AuthWrapper";
+import { useNavigate } from "react-router-dom";
 
 const Layout: React.FC = () => {
-  const { currentUser, isLoading, isAuthenticated } = useAuth();
+  const { currentUser, isLoading, isAuthenticated, refreshUserProfile } = useAuth();
+  const navigate = useNavigate();
+  
+  // Refresh user profile data when layout component mounts
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      refreshUserProfile();
+    }
+  }, [isAuthenticated, currentUser, refreshUserProfile]);
   
   if (isLoading) {
     return (

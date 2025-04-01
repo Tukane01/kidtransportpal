@@ -27,6 +27,8 @@ interface AuthContextType {
   register: (userData: any) => Promise<boolean>;
   logout: () => void;
   updateUserProfile: (data: Partial<User>) => Promise<boolean>;
+  deleteUserProfile: () => Promise<boolean>;
+  refreshUserProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,6 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     isLoading: supabaseLoading,
     updateProfile,
+    refreshProfile
   } = useSupabaseAuth();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -174,6 +177,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const deleteUserProfile = async () => {
+    try {
+      // Note: This doesn't delete the actual auth user, just removes profile data
+      // For a complete delete, you would need Supabase admin functions
+      const emptyProfile: Partial<UserProfile> = {
+        name: null,
+        surname: null,
+        phone: null,
+        profileImage: null
+      };
+
+      const { error } = await updateProfile(emptyProfile);
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+
+      toast.success("Profile data removed successfully!");
+      return true;
+    } catch (error: any) {
+      toast.error(error.message);
+      return false;
+    }
+  };
+
+  const refreshUserProfile = async () => {
+    try {
+      await refreshProfile();
+      toast.success("Profile refreshed successfully!");
+    } catch (error: any) {
+      toast.error("Failed to refresh profile");
+      console.error("Error refreshing profile:", error);
+    }
+  };
+
   const value: AuthContextType = {
     isAuthenticated,
     currentUser,
@@ -183,6 +221,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     register,
     logout,
     updateUserProfile,
+    deleteUserProfile,
+    refreshUserProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

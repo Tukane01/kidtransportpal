@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,7 +49,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch profile for the current user
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -64,7 +62,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return null;
       }
 
-      // Map database fields to our UserProfile interface
       const userProfile: UserProfile = {
         id: data.id,
         name: data.name || '',
@@ -76,7 +73,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         role: data.role as UserRole || 'parent',
       };
 
-      // If user is a driver, fetch their cars
       if (data && data.role === 'driver') {
         const { data: carsData, error: carsError } = await supabase
           .from('cars')
@@ -84,7 +80,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           .eq('owner_id', userId);
         
         if (!carsError && carsData) {
-          // Map database fields to our Car interface
           userProfile.cars = carsData.map(car => ({
             id: car.id,
             make: car.make,
@@ -106,7 +101,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
-  // Refresh the current user's profile
   const refreshProfile = async () => {
     if (!user) return;
     
@@ -116,19 +110,15 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
-  // Initialize auth and listen for auth state changes
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true);
 
-      // First set up the auth state listener
       const { data: authListener } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
         setSession(currentSession);
         setUser(currentSession?.user || null);
 
-        // If there is a user, fetch their profile
         if (currentSession?.user) {
-          // Use setTimeout to avoid the Supabase authentication deadlock issue
           setTimeout(async () => {
             const profileData = await fetchProfile(currentSession.user.id);
             setProfile(profileData);
@@ -140,12 +130,10 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setIsLoading(false);
       });
 
-      // Then check for a current session
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       setSession(currentSession);
       setUser(currentSession?.user || null);
 
-      // If there is a user, fetch their profile
       if (currentSession?.user) {
         const profileData = await fetchProfile(currentSession.user.id);
         setProfile(profileData);
@@ -246,7 +234,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (!user) return { error: 'No user is logged in' };
     
     try {
-      // Convert from our camelCase to snake_case for Supabase
       const supabaseData: any = {};
       if (userData.name !== undefined) supabaseData.name = userData.name;
       if (userData.surname !== undefined) supabaseData.surname = userData.surname;
@@ -267,11 +254,9 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       await refreshProfile();
-      toast.success("Profile updated successfully");
       return { error: null };
     } catch (error) {
       console.error("Error in updateProfile:", error);
-      toast.error("Failed to update profile");
       return { error };
     }
   };
