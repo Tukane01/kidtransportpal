@@ -33,8 +33,8 @@ const AuthWrapper: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-schoolride-primary border-t-transparent rounded-full"></div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="animate-spin h-10 w-10 border-4 border-schoolride-primary border-t-transparent rounded-full"></div>
       </div>
     );
   }
@@ -47,17 +47,17 @@ const AuthWrapper: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-schoolride-background p-4">
       <Card className="w-full max-w-md shadow-lg animate-fade-in">
         <CardHeader className="space-y-1 flex flex-col items-center">
-          <Logo className="h-16 mb-4" />
-          <CardTitle className="text-2xl text-center font-heading font-bold">Ride2School</CardTitle>
-          <CardDescription className="text-center">
+          <Logo className="h-20 mb-4" />
+          <CardTitle className="text-2xl text-center font-heading font-bold text-schoolride-primary">Ride2School</CardTitle>
+          <CardDescription className="text-center text-base">
             Safe transportation for your children
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-2 mb-8">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
+              <TabsTrigger value="login" className="text-base py-2">Login</TabsTrigger>
+              <TabsTrigger value="register" className="text-base py-2">Register</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
@@ -73,9 +73,9 @@ const AuthWrapper: React.FC = () => {
                 <>
                   <ParentRegisterForm />
                   <Button
-                    variant="link"
+                    variant="outline"
                     onClick={handleBackToOptions}
-                    className="w-full mt-4"
+                    className="w-full mt-4 text-schoolride-primary border-schoolride-primary hover:bg-schoolride-primary/5"
                   >
                     Back to options
                   </Button>
@@ -86,9 +86,9 @@ const AuthWrapper: React.FC = () => {
                 <>
                   <DriverRegisterForm />
                   <Button
-                    variant="link"
+                    variant="outline"
                     onClick={handleBackToOptions}
-                    className="w-full mt-4"
+                    className="w-full mt-4 text-schoolride-primary border-schoolride-primary hover:bg-schoolride-primary/5"
                   >
                     Back to options
                   </Button>
@@ -98,7 +98,7 @@ const AuthWrapper: React.FC = () => {
           </Tabs>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <small className="text-muted-foreground text-center">
+          <small className="text-muted-foreground text-center text-sm">
             &copy; {new Date().getFullYear()} Ride2School. All rights reserved.
           </small>
         </CardFooter>

@@ -33,11 +33,11 @@ const ParentSidebar: React.FC = () => {
         <div className="flex items-center space-x-3">
           <Avatar className="h-10 w-10">
             <AvatarImage src={currentUser?.profileImage} alt={currentUser?.name} />
-            <AvatarFallback>{getInitials()}</AvatarFallback>
+            <AvatarFallback className="bg-schoolride-primary text-white">{getInitials()}</AvatarFallback>
           </Avatar>
           
           <div>
-            <div className="font-medium">
+            <div className="font-medium text-gray-800">
               {currentUser?.name || "User"} {currentUser?.surname || ""}
             </div>
             <div className="text-xs text-muted-foreground">{currentUser?.email || "No email"}</div>
@@ -51,12 +51,14 @@ const ParentSidebar: React.FC = () => {
             <li key={item.id}>
               <Button
                 variant={activeTab === item.id ? "secondary" : "ghost"}
-                className={`w-full justify-start ${
-                  activeTab === item.id ? "bg-schoolride-primary/10" : ""
+                className={`w-full justify-start text-base ${
+                  activeTab === item.id 
+                    ? "bg-schoolride-primary/10 text-schoolride-primary font-medium" 
+                    : "text-gray-600 hover:text-schoolride-primary"
                 }`}
                 onClick={() => setActiveTab(item.id)}
               >
-                <span className="mr-2">{item.icon}</span>
+                <span className="mr-3">{item.icon}</span>
                 {item.label}
               </Button>
             </li>
@@ -65,8 +67,12 @@ const ParentSidebar: React.FC = () => {
       </nav>
       
       <div className="p-4 border-t">
-        <Button variant="ghost" className="w-full justify-start text-red-500" onClick={logout}>
-          <LogOut size={18} className="mr-2" />
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start text-red-500 hover:bg-red-50 hover:text-red-600"
+          onClick={logout}
+        >
+          <LogOut size={18} className="mr-3" />
           Logout
         </Button>
       </div>

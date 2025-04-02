@@ -67,7 +67,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             name: '',
             surname: '',
             role: 'parent' as UserRole,
-            walletBalance: 0
+            wallet_balance: 0
           };
           
           const { error: insertError } = await supabase
@@ -80,7 +80,13 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           }
           
           // Return the default profile we just created
-          return defaultProfile as UserProfile;
+          return {
+            id: userId,
+            name: '',
+            surname: '',
+            role: 'parent' as UserRole,
+            walletBalance: 0
+          } as UserProfile;
         }
         
         console.error("Error fetching profile:", error);
@@ -126,7 +132,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
-  const refreshProfile = async (showToast: boolean = true) => {
+  const refreshProfile = async (showToast: boolean = false) => {
     if (!user) return;
     
     const profileData = await fetchProfile(user.id);
@@ -281,7 +287,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return { error };
       }
 
-      await refreshProfile();
+      await refreshProfile(false); // Don't show toast on auto-refresh
       return { error: null };
     } catch (error) {
       console.error("Error in updateProfile:", error);
