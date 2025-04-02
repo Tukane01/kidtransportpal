@@ -33,20 +33,20 @@ const ParentSidebar: React.FC = () => {
         <div className="flex items-center space-x-3">
           <Avatar className="h-10 w-10">
             <AvatarImage src={currentUser?.profileImage} alt={currentUser?.name} />
-            <AvatarFallback className="bg-schoolride-primary text-white">{getInitials()}</AvatarFallback>
+            <AvatarFallback className="bg-schoolride-primary text-white font-medium">{getInitials()}</AvatarFallback>
           </Avatar>
           
           <div>
-            <div className="font-medium text-gray-800">
+            <div className="font-medium text-gray-800 text-base">
               {currentUser?.name || "User"} {currentUser?.surname || ""}
             </div>
-            <div className="text-xs text-muted-foreground">{currentUser?.email || "No email"}</div>
+            <div className="text-xs text-muted-foreground font-medium">{currentUser?.email || "No email"}</div>
           </div>
         </div>
       </div>
       
       <nav className="flex-1 p-4">
-        <ul className="space-y-1">
+        <ul className="space-y-2">
           {navItems.map((item) => (
             <li key={item.id}>
               <Button
@@ -54,7 +54,7 @@ const ParentSidebar: React.FC = () => {
                 className={`w-full justify-start text-base ${
                   activeTab === item.id 
                     ? "bg-schoolride-primary/10 text-schoolride-primary font-medium" 
-                    : "text-gray-600 hover:text-schoolride-primary"
+                    : "text-gray-700 hover:text-schoolride-primary font-medium"
                 }`}
                 onClick={() => setActiveTab(item.id)}
               >
@@ -69,7 +69,7 @@ const ParentSidebar: React.FC = () => {
       <div className="p-4 border-t">
         <Button 
           variant="ghost" 
-          className="w-full justify-start text-red-500 hover:bg-red-50 hover:text-red-600"
+          className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700 font-medium"
           onClick={logout}
         >
           <LogOut size={18} className="mr-3" />

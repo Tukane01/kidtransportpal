@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { toast } from "sonner";
 import { useSupabaseAuth, UserProfile, UserRole, Car } from "./SupabaseAuthContext";
@@ -167,7 +168,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return prevUser;
       });
 
-      toast.success("Profile updated successfully!");
       return true;
     } catch (error: any) {
       toast.error(error.message);
@@ -190,7 +190,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      toast.success("Profile data removed successfully!");
       return true;
     } catch (error: any) {
       toast.error(error.message);
@@ -198,11 +197,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const refreshUserProfile = async (showToast: boolean = true) => {
+  const refreshUserProfile = async (showToast: boolean = false) => {
     try {
-      await refreshProfile();
+      await refreshProfile(false); // Always do silent refresh
       if (showToast) {
-        toast.success("Profile refreshed successfully!");
+        toast.success("Profile updated successfully!");
       }
     } catch (error: any) {
       console.error("Error refreshing profile:", error);

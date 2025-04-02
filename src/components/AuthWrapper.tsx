@@ -49,15 +49,15 @@ const AuthWrapper: React.FC = () => {
         <CardHeader className="space-y-1 flex flex-col items-center">
           <Logo className="h-20 mb-4" />
           <CardTitle className="text-2xl text-center font-heading font-bold text-schoolride-primary">Ride2School</CardTitle>
-          <CardDescription className="text-center text-base">
+          <CardDescription className="text-center text-base text-gray-600">
             Safe transportation for your children
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-2 mb-8">
-              <TabsTrigger value="login" className="text-base py-2">Login</TabsTrigger>
-              <TabsTrigger value="register" className="text-base py-2">Register</TabsTrigger>
+              <TabsTrigger value="login" className="text-base py-2 font-medium">Login</TabsTrigger>
+              <TabsTrigger value="register" className="text-base py-2 font-medium">Register</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
@@ -75,7 +75,7 @@ const AuthWrapper: React.FC = () => {
                   <Button
                     variant="outline"
                     onClick={handleBackToOptions}
-                    className="w-full mt-4 text-schoolride-primary border-schoolride-primary hover:bg-schoolride-primary/5"
+                    className="w-full mt-4 text-schoolride-primary border-schoolride-primary hover:bg-schoolride-primary/5 font-medium"
                   >
                     Back to options
                   </Button>
@@ -88,7 +88,7 @@ const AuthWrapper: React.FC = () => {
                   <Button
                     variant="outline"
                     onClick={handleBackToOptions}
-                    className="w-full mt-4 text-schoolride-primary border-schoolride-primary hover:bg-schoolride-primary/5"
+                    className="w-full mt-4 text-schoolride-primary border-schoolride-primary hover:bg-schoolride-primary/5 font-medium"
                   >
                     Back to options
                   </Button>
@@ -98,7 +98,7 @@ const AuthWrapper: React.FC = () => {
           </Tabs>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <small className="text-muted-foreground text-center text-sm">
+          <small className="text-muted-foreground text-center text-sm font-medium">
             &copy; {new Date().getFullYear()} Ride2School. All rights reserved.
           </small>
         </CardFooter>
