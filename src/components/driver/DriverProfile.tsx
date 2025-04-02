@@ -82,8 +82,7 @@ const DriverProfile: React.FC = () => {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await refreshUserProfile();
-      toast.success("Profile data refreshed");
+      await refreshUserProfile(true);
     } catch (error) {
       console.error("Error refreshing profile:", error);
     } finally {

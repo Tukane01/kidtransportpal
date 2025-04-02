@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { toast } from "sonner";
 import { useSupabaseAuth, UserProfile, UserRole, Car } from "./SupabaseAuthContext";
@@ -28,7 +27,7 @@ interface AuthContextType {
   logout: () => void;
   updateUserProfile: (data: Partial<User>) => Promise<boolean>;
   deleteUserProfile: () => Promise<boolean>;
-  refreshUserProfile: () => Promise<void>;
+  refreshUserProfile: (showToast?: boolean) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -147,7 +146,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUserProfile = async (data: Partial<User>) => {
     try {
-      // Convert from User interface to UserProfile interface
       const profileData: Partial<UserProfile> = {};
       if (data.name !== undefined) profileData.name = data.name;
       if (data.surname !== undefined) profileData.surname = data.surname;
@@ -179,8 +177,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteUserProfile = async () => {
     try {
-      // Note: This doesn't delete the actual auth user, just removes profile data
-      // For a complete delete, you would need Supabase admin functions
       const emptyProfile: Partial<UserProfile> = {
         name: null,
         surname: null,
@@ -202,13 +198,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const refreshUserProfile = async () => {
+  const refreshUserProfile = async (showToast: boolean = true) => {
     try {
       await refreshProfile();
-      toast.success("Profile refreshed successfully!");
+      if (showToast) {
+        toast.success("Profile refreshed successfully!");
+      }
     } catch (error: any) {
-      toast.error("Failed to refresh profile");
       console.error("Error refreshing profile:", error);
+      if (showToast) {
+        toast.error("Failed to refresh profile");
+      }
     }
   };
 

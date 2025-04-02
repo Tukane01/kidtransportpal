@@ -13,7 +13,8 @@ const Layout: React.FC = () => {
   // Refresh user profile data when layout component mounts
   useEffect(() => {
     if (isAuthenticated && currentUser) {
-      refreshUserProfile().catch(error => {
+      // Remove the toast notification from the refreshUserProfile call
+      refreshUserProfile(false).catch(error => {
         console.error("Error refreshing profile:", error);
       });
     } else if (!isAuthenticated && !isLoading) {

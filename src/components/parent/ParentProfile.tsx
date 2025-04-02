@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -88,7 +87,7 @@ const ParentProfile: React.FC = () => {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await refreshUserProfile();
+      await refreshUserProfile(true);
       toast.success("Profile data refreshed");
     } catch (error) {
       console.error("Error refreshing profile:", error);
