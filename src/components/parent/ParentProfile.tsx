@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -88,7 +89,6 @@ const ParentProfile: React.FC = () => {
     setIsRefreshing(true);
     try {
       await refreshUserProfile(true);
-      toast.success("Profile data refreshed");
     } catch (error) {
       console.error("Error refreshing profile:", error);
     } finally {
@@ -339,38 +339,11 @@ const ParentProfile: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="border rounded-md p-4 bg-gray-50 flex justify-between items-center">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 bg-blue-600 rounded-md flex items-center justify-center text-white">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect width="20" height="14" x="2" y="5" rx="2" />
-                        <line x1="2" x2="22" y1="10" y2="10" />
-                      </svg>
-                    </div>
-                    <div className="ml-4">
-                      <div className="font-medium">SchoolRide Wallet</div>
-                      <div className="text-sm text-muted-foreground">Balance: R 500.00</div>
-                    </div>
-                  </div>
-                  <Button variant="link" className="text-schoolride-primary">Top Up</Button>
-                </div>
-                
-                <div className="border rounded-md p-4 bg-gray-50 flex justify-between items-center">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 bg-purple-600 rounded-md flex items-center justify-center text-white">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect width="20" height="14" x="2" y="5" rx="2" />
-                        <line x1="2" x2="22" y1="10" y2="10" />
-                      </svg>
-                    </div>
-                    <div className="ml-4">
-                      <div className="font-medium">Credit Card</div>
-                      <div className="text-sm text-muted-foreground">**** **** **** 4328</div>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm">Remove</Button>
-                </div>
+              <div className="text-center py-10">
+                <p className="text-muted-foreground">No payment methods added yet</p>
+                <Button variant="link" className="text-schoolride-primary">
+                  Add your first payment method
+                </Button>
               </div>
             </CardContent>
           </Card>

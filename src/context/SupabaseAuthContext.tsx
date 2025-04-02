@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,6 +59,30 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .single();
       
       if (error) {
+        // Check if it's a "no rows returned" error
+        if (error.code === 'PGRST116') {
+          // Create a default profile for this user
+          const defaultProfile: Partial<UserProfile> = {
+            id: userId,
+            name: '',
+            surname: '',
+            role: 'parent',
+            walletBalance: 0
+          };
+          
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert([defaultProfile]);
+            
+          if (insertError) {
+            console.error("Error creating default profile:", insertError);
+            return null;
+          }
+          
+          // Return the default profile we just created
+          return defaultProfile as UserProfile;
+        }
+        
         console.error("Error fetching profile:", error);
         return null;
       }
