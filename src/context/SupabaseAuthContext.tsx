@@ -39,7 +39,7 @@ interface AuthContextType {
   signUp: ({ email, password, options }: { email: string; password: string; options?: { data: any } }) => Promise<{ error: any | null }>;
   signOut: () => Promise<{ error: any | null }>;
   updateProfile: (userData: Partial<UserProfile>) => Promise<{ error: any | null }>;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: (showToast?: boolean) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -62,17 +62,17 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         // Check if it's a "no rows returned" error
         if (error.code === 'PGRST116') {
           // Create a default profile for this user
-          const defaultProfile: Partial<UserProfile> = {
+          const defaultProfile = {
             id: userId,
             name: '',
             surname: '',
-            role: 'parent',
+            role: 'parent' as UserRole,
             walletBalance: 0
           };
           
           const { error: insertError } = await supabase
             .from('profiles')
-            .insert([defaultProfile]);
+            .insert(defaultProfile);
             
           if (insertError) {
             console.error("Error creating default profile:", insertError);
@@ -126,12 +126,15 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
-  const refreshProfile = async () => {
+  const refreshProfile = async (showToast: boolean = true) => {
     if (!user) return;
     
     const profileData = await fetchProfile(user.id);
     if (profileData) {
       setProfile(profileData);
+      if (showToast) {
+        toast.success("Profile refreshed successfully");
+      }
     }
   };
 

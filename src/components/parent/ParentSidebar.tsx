@@ -38,9 +38,9 @@ const ParentSidebar: React.FC = () => {
           
           <div>
             <div className="font-medium">
-              {currentUser?.name} {currentUser?.surname}
+              {currentUser?.name || "User"} {currentUser?.surname || ""}
             </div>
-            <div className="text-xs text-muted-foreground">{currentUser?.email}</div>
+            <div className="text-xs text-muted-foreground">{currentUser?.email || "No email"}</div>
           </div>
         </div>
       </div>

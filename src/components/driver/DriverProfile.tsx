@@ -44,10 +44,10 @@ const DriverProfile: React.FC = () => {
   };
   
   const profileFormSchema = z.object({
-    name: z.string().min(3, "Name must be at least 3 characters"),
-    surname: z.string().min(3, "Surname must be at least 3 characters"),
+    name: z.string().min(1, "Name is required"),
+    surname: z.string().min(1, "Surname is required"),
     email: z.string().email("Invalid email format"),
-    phone: z.string().min(10, "Phone number must be valid"),
+    phone: z.string().min(7, "Phone number must be valid"),
   });
   
   type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -122,9 +122,9 @@ const DriverProfile: React.FC = () => {
               
               <div className="mt-4 text-center">
                 <h3 className="text-lg font-medium">
-                  {currentUser?.name} {currentUser?.surname}
+                  {currentUser?.name || "Set your name"} {currentUser?.surname || ""}
                 </h3>
-                <p className="text-muted-foreground text-sm">{currentUser?.email}</p>
+                <p className="text-muted-foreground text-sm">{currentUser?.email || "No email set"}</p>
                 <div className="flex items-center justify-center mt-1">
                   <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
                   <span className="text-sm">Verified Driver</span>
@@ -250,17 +250,17 @@ const DriverProfile: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label className="text-muted-foreground">First Name</Label>
-                      <div className="font-medium mt-1">{currentUser?.name}</div>
+                      <div className="font-medium mt-1">{currentUser?.name || "Not provided"}</div>
                     </div>
                     
                     <div>
                       <Label className="text-muted-foreground">Last Name</Label>
-                      <div className="font-medium mt-1">{currentUser?.surname}</div>
+                      <div className="font-medium mt-1">{currentUser?.surname || "Not provided"}</div>
                     </div>
                     
                     <div>
                       <Label className="text-muted-foreground">Email</Label>
-                      <div className="font-medium mt-1">{currentUser?.email}</div>
+                      <div className="font-medium mt-1">{currentUser?.email || "Not provided"}</div>
                     </div>
                     
                     <div>

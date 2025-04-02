@@ -60,68 +60,26 @@ interface RideContextType {
 
 const RideContext = createContext<RideContextType | undefined>(undefined);
 
-// Initial mock data
-const MOCK_CHILDREN: Child[] = [
-  {
-    id: "child-1",
-    name: "Emma",
-    surname: "Parent",
-    idNumber: "1301015800086",
-    schoolName: "Springfield Elementary",
-    schoolAddress: "123 School Road, Springfield"
-  }
-];
-
-const MOCK_CARS: Car[] = [
-  {
-    id: "car-1",
-    make: "Toyota",
-    model: "Corolla",
-    registrationNumber: "CA123456",
-    color: "Silver",
-    vinNumber: "1HGCM82633A123456",
-    ownerIdNumber: "8503125800088"
-  }
-];
-
-const MOCK_RIDES: Ride[] = [
-  {
-    id: "ride-1",
-    parentId: "parent-123",
-    childId: "child-1",
-    driverId: "driver-456",
-    pickupAddress: "10 Home Street, Springfield",
-    dropoffAddress: "123 School Road, Springfield",
-    pickupTime: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes from now
-    status: "requested",
-    otp: "123456",
-    createdAt: new Date(),
-    price: 35,
-  }
-];
+// Initial empty data structures
+const INITIAL_CHILDREN: Child[] = [];
+const INITIAL_CARS: Car[] = [];
+const INITIAL_RIDES: Ride[] = [];
 
 export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser } = useAuth();
-  const [childrenData, setChildrenData] = useState<Child[]>([...MOCK_CHILDREN]);
-  const [carsData, setCarsData] = useState<Car[]>([...MOCK_CARS]);
-  const [ridesData, setRidesData] = useState<Ride[]>([...MOCK_RIDES]);
+  const [childrenData, setChildrenData] = useState<Child[]>([...INITIAL_CHILDREN]);
+  const [carsData, setCarsData] = useState<Car[]>([...INITIAL_CARS]);
+  const [ridesData, setRidesData] = useState<Ride[]>([...INITIAL_RIDES]);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Filter data based on current user
+  // Initialize empty data structures
   useEffect(() => {
     if (!currentUser) return;
     
-    // In a real app, this would be done through API calls
-    if (currentUser.role === "parent") {
-      // Filter rides by parent ID
-      setRidesData(MOCK_RIDES.filter(ride => ride.parentId === currentUser.id));
-    } else if (currentUser.role === "driver") {
-      // Filter rides by driver ID or available rides
-      setRidesData(MOCK_RIDES.filter(ride => 
-        ride.driverId === currentUser.id || 
-        (ride.status === "requested" && !ride.driverId)
-      ));
-    }
+    // In a real app, this would be done through API calls to fetch user-specific data
+    setChildrenData([]);
+    setCarsData([]);
+    setRidesData([]);
   }, [currentUser]);
   
   const addChild = async (child: Omit<Child, "id">): Promise<boolean> => {
@@ -136,7 +94,6 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       
       setChildrenData(prev => [...prev, newChild]);
-      MOCK_CHILDREN.push(newChild);
       toast.success(`${child.name} has been added successfully`);
       return true;
     } catch (error) {
@@ -160,14 +117,6 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
         )
       );
       
-      const mockChildIndex = MOCK_CHILDREN.findIndex(c => c.id === childId);
-      if (mockChildIndex >= 0) {
-        MOCK_CHILDREN[mockChildIndex] = {
-          ...MOCK_CHILDREN[mockChildIndex],
-          ...data
-        };
-      }
-      
       toast.success("Child information updated");
       return true;
     } catch (error) {
@@ -186,11 +135,6 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await new Promise(resolve => setTimeout(resolve, 700));
       
       setChildrenData(prev => prev.filter(child => child.id !== childId));
-      
-      const mockChildIndex = MOCK_CHILDREN.findIndex(c => c.id === childId);
-      if (mockChildIndex >= 0) {
-        MOCK_CHILDREN.splice(mockChildIndex, 1);
-      }
       
       toast.success("Child removed successfully");
       return true;
@@ -215,7 +159,6 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       
       setCarsData(prev => [...prev, newCar]);
-      MOCK_CARS.push(newCar);
       toast.success(`${car.make} ${car.model} has been added successfully`);
       return true;
     } catch (error) {
@@ -239,14 +182,6 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
         )
       );
       
-      const mockCarIndex = MOCK_CARS.findIndex(c => c.id === carId);
-      if (mockCarIndex >= 0) {
-        MOCK_CARS[mockCarIndex] = {
-          ...MOCK_CARS[mockCarIndex],
-          ...data
-        };
-      }
-      
       toast.success("Vehicle information updated");
       return true;
     } catch (error) {
@@ -265,11 +200,6 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await new Promise(resolve => setTimeout(resolve, 700));
       
       setCarsData(prev => prev.filter(car => car.id !== carId));
-      
-      const mockCarIndex = MOCK_CARS.findIndex(c => c.id === carId);
-      if (mockCarIndex >= 0) {
-        MOCK_CARS.splice(mockCarIndex, 1);
-      }
       
       toast.success("Vehicle removed successfully");
       return true;
@@ -309,7 +239,6 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       
       setRidesData(prev => [...prev, newRide]);
-      MOCK_RIDES.push(newRide);
       
       toast.success("Ride requested successfully");
       return true;
@@ -344,17 +273,6 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
             : ride
         )
       );
-      
-      const mockRideIndex = MOCK_RIDES.findIndex(r => r.id === rideId);
-      if (mockRideIndex >= 0) {
-        MOCK_RIDES[mockRideIndex] = {
-          ...MOCK_RIDES[mockRideIndex],
-          status,
-          driverId: status === "accepted" && currentUser.role === "driver" 
-            ? currentUser.id 
-            : MOCK_RIDES[mockRideIndex].driverId
-        };
-      }
       
       let message = "";
       switch (status) {

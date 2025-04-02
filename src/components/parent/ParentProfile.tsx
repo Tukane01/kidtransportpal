@@ -95,6 +95,11 @@ const ParentProfile: React.FC = () => {
       setIsRefreshing(false);
     }
   };
+
+  const getInitials = () => {
+    if (!currentUser?.name || !currentUser?.surname) return "U";
+    return `${currentUser.name.charAt(0)}${currentUser.surname.charAt(0)}`.toUpperCase();
+  };
   
   return (
     <div className="space-y-6">
@@ -130,17 +135,17 @@ const ParentProfile: React.FC = () => {
                 <Avatar className="h-24 w-24">
                   <AvatarImage src={currentUser?.profileImage} alt={currentUser?.name} />
                   <AvatarFallback className="text-2xl">
-                    {currentUser?.name?.[0]}{currentUser?.surname?.[0]}
+                    {getInitials()}
                   </AvatarFallback>
                 </Avatar>
                 
                 <div className="flex-1">
                   <h3 className="text-lg font-medium">
-                    {currentUser?.name} {currentUser?.surname}
+                    {currentUser?.name || "Set your name"} {currentUser?.surname || ""}
                   </h3>
-                  <p className="text-muted-foreground">{currentUser?.email}</p>
-                  <p className="text-muted-foreground">{currentUser?.phone}</p>
-                  <p className="text-muted-foreground mt-1">ID: {currentUser?.idNumber}</p>
+                  <p className="text-muted-foreground">{currentUser?.email || "No email set"}</p>
+                  <p className="text-muted-foreground">{currentUser?.phone || "No phone set"}</p>
+                  <p className="text-muted-foreground mt-1">ID: {currentUser?.idNumber || "Not provided"}</p>
                   
                   <div className="mt-2">
                     <Button variant="outline" size="sm">
