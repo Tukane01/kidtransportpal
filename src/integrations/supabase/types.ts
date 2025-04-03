@@ -16,7 +16,7 @@ export type Database = {
           id: string
           make: string
           model: string
-          owner_id: string | null
+          owner_id: string
           owner_id_number: string
           registration_number: string
           updated_at: string | null
@@ -28,7 +28,7 @@ export type Database = {
           id?: string
           make: string
           model: string
-          owner_id?: string | null
+          owner_id: string
           owner_id_number: string
           registration_number: string
           updated_at?: string | null
@@ -40,7 +40,7 @@ export type Database = {
           id?: string
           make?: string
           model?: string
-          owner_id?: string | null
+          owner_id?: string
           owner_id_number?: string
           registration_number?: string
           updated_at?: string | null
@@ -50,19 +50,37 @@ export type Database = {
       }
       children: {
         Row: {
-          created_at: string
-          id: number
-          name: string | null
+          created_at: string | null
+          id: string
+          id_number: string | null
+          name: string
+          parent_id: string
+          school_address: string
+          school_name: string
+          surname: string
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
-          id?: number
-          name?: string | null
+          created_at?: string | null
+          id?: string
+          id_number?: string | null
+          name: string
+          parent_id: string
+          school_address: string
+          school_name: string
+          surname: string
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
-          id?: number
-          name?: string | null
+          created_at?: string | null
+          id?: string
+          id_number?: string | null
+          name?: string
+          parent_id?: string
+          school_address?: string
+          school_name?: string
+          surname?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -110,7 +128,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      delete_user: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

@@ -189,6 +189,7 @@ const DriverProfile: React.FC = () => {
       }));
       
       setCars(formattedCars);
+      toast.success("Data refreshed successfully");
     } catch (error) {
       console.error("Error refreshing data:", error);
       toast.error("Failed to refresh data");
@@ -200,7 +201,7 @@ const DriverProfile: React.FC = () => {
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
     try {
-      // First delete the user from the auth system
+      // Use the delete_user RPC function
       const { error } = await supabase.rpc('delete_user');
       
       if (error) throw error;
@@ -211,7 +212,7 @@ const DriverProfile: React.FC = () => {
       navigate('/auth');
     } catch (error) {
       console.error("Error deleting account:", error);
-      toast.error("Failed to delete account");
+      toast.error("Failed to delete account: " + (error as Error).message);
     } finally {
       setIsDeleting(false);
     }
@@ -243,13 +244,14 @@ const DriverProfile: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold font-heading">Driver Profile</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Driver Profile</h1>
         <div className="flex space-x-2">
           <Button 
             variant="outline" 
             size="sm" 
             onClick={handleRefresh}
             disabled={isRefreshing}
+            className="text-gray-800 border-gray-300"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -257,23 +259,23 @@ const DriverProfile: React.FC = () => {
           
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">
+              <Button variant="destructive" size="sm" className="text-white">
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete Account
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
+                <AlertDialogTitle className="text-gray-900">Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription className="text-gray-700">
                   This action cannot be undone. This will permanently delete your account
                   and remove all your data from our servers.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel className="text-gray-800 bg-gray-100 hover:bg-gray-200">Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-red-600 hover:bg-red-700 text-white"
                   onClick={handleDeleteAccount}
                   disabled={isDeleting}
                 >
@@ -299,7 +301,7 @@ const DriverProfile: React.FC = () => {
               <div className="relative">
                 <Avatar className="h-32 w-32">
                   <AvatarImage src={profile?.profileImage} alt={profile?.name} />
-                  <AvatarFallback className="text-3xl">{getInitials()}</AvatarFallback>
+                  <AvatarFallback className="text-3xl bg-schoolride-primary text-white">{getInitials()}</AvatarFallback>
                 </Avatar>
                 <Button size="icon" variant="secondary" className="absolute bottom-0 right-0 rounded-full h-8 w-8">
                   <Camera className="h-4 w-4" />
@@ -307,17 +309,17 @@ const DriverProfile: React.FC = () => {
               </div>
               
               <div className="mt-4 text-center">
-                <h3 className="text-lg font-medium">
+                <h3 className="text-lg font-medium text-gray-900">
                   {profile?.name || "Set your name"} {profile?.surname || ""}
                 </h3>
-                <p className="text-muted-foreground text-sm">{user?.email || "No email set"}</p>
+                <p className="text-gray-600 text-sm">{user?.email || "No email set"}</p>
                 <div className="flex items-center justify-center mt-1">
                   <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
-                  <span className="text-sm">Verified Driver</span>
+                  <span className="text-sm text-gray-800">Verified Driver</span>
                 </div>
               </div>
               
-              <Separator className="my-6" />
+              <Separator className="my-6 bg-gray-200" />
               
               <div className="space-y-4 w-full">
                 <div className="flex items-center">
@@ -325,8 +327,8 @@ const DriverProfile: React.FC = () => {
                     <User className="h-5 w-5 text-schoolride-primary" />
                   </div>
                   <div className="ml-3">
-                    <div className="text-sm text-muted-foreground">ID Number</div>
-                    <div className="font-medium">{profile?.idNumber || "Not provided"}</div>
+                    <div className="text-sm text-gray-600">ID Number</div>
+                    <div className="font-medium text-gray-900">{profile?.idNumber || "Not provided"}</div>
                   </div>
                 </div>
                 
@@ -335,8 +337,8 @@ const DriverProfile: React.FC = () => {
                     <CarIcon className="h-5 w-5 text-schoolride-primary" />
                   </div>
                   <div className="ml-3">
-                    <div className="text-sm text-muted-foreground">Driver Status</div>
-                    <div className="font-medium">Active</div>
+                    <div className="text-sm text-gray-600">Driver Status</div>
+                    <div className="font-medium text-gray-900">Active</div>
                   </div>
                 </div>
               </div>
@@ -347,9 +349,13 @@ const DriverProfile: React.FC = () => {
         <div className="md:col-span-2 space-y-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Personal Information</CardTitle>
+              <CardTitle className="text-gray-900">Personal Information</CardTitle>
               {!isEditMode && (
-                <Button variant="outline" onClick={() => setIsEditMode(true)}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditMode(true)}
+                  className="text-gray-800 border-gray-300"
+                >
                   Edit Profile
                 </Button>
               )}
@@ -364,11 +370,11 @@ const DriverProfile: React.FC = () => {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>First Name</FormLabel>
+                            <FormLabel className="text-gray-700">First Name</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input {...field} className="bg-white text-gray-800 border-gray-300" />
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-red-600" />
                           </FormItem>
                         )}
                       />
@@ -378,11 +384,11 @@ const DriverProfile: React.FC = () => {
                         name="surname"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Last Name</FormLabel>
+                            <FormLabel className="text-gray-700">Last Name</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input {...field} className="bg-white text-gray-800 border-gray-300" />
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-red-600" />
                           </FormItem>
                         )}
                       />
@@ -392,11 +398,11 @@ const DriverProfile: React.FC = () => {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email</FormLabel>
+                            <FormLabel className="text-gray-700">Email</FormLabel>
                             <FormControl>
-                              <Input {...field} readOnly />
+                              <Input {...field} readOnly className="bg-gray-100 text-gray-800 border-gray-300" />
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-red-600" />
                           </FormItem>
                         )}
                       />
@@ -406,11 +412,11 @@ const DriverProfile: React.FC = () => {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
+                            <FormLabel className="text-gray-700">Phone Number</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input {...field} className="bg-white text-gray-800 border-gray-300" />
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-red-600" />
                           </FormItem>
                         )}
                       />
@@ -420,11 +426,11 @@ const DriverProfile: React.FC = () => {
                         name="idNumber"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>ID Number</FormLabel>
+                            <FormLabel className="text-gray-700">ID Number</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input {...field} className="bg-white text-gray-800 border-gray-300" />
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-red-600" />
                           </FormItem>
                         )}
                       />
@@ -436,10 +442,15 @@ const DriverProfile: React.FC = () => {
                         onClick={() => setIsEditMode(false)}
                         type="button"
                         disabled={isSubmitting}
+                        className="text-gray-800 border-gray-300"
                       >
                         Cancel
                       </Button>
-                      <Button type="submit" disabled={isSubmitting}>
+                      <Button 
+                        type="submit" 
+                        disabled={isSubmitting}
+                        className="bg-schoolride-primary hover:bg-schoolride-secondary text-white"
+                      >
                         {isSubmitting ? "Saving..." : "Save Changes"}
                       </Button>
                     </div>
@@ -449,28 +460,28 @@ const DriverProfile: React.FC = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-muted-foreground">First Name</Label>
-                      <div className="font-medium mt-1">{profile?.name || "Not provided"}</div>
+                      <Label className="text-gray-600">First Name</Label>
+                      <div className="font-medium mt-1 text-gray-900">{profile?.name || "Not provided"}</div>
                     </div>
                     
                     <div>
-                      <Label className="text-muted-foreground">Last Name</Label>
-                      <div className="font-medium mt-1">{profile?.surname || "Not provided"}</div>
+                      <Label className="text-gray-600">Last Name</Label>
+                      <div className="font-medium mt-1 text-gray-900">{profile?.surname || "Not provided"}</div>
                     </div>
                     
                     <div>
-                      <Label className="text-muted-foreground">Email</Label>
-                      <div className="font-medium mt-1">{user?.email || "Not provided"}</div>
+                      <Label className="text-gray-600">Email</Label>
+                      <div className="font-medium mt-1 text-gray-900">{user?.email || "Not provided"}</div>
                     </div>
                     
                     <div>
-                      <Label className="text-muted-foreground">Phone Number</Label>
-                      <div className="font-medium mt-1">{profile?.phone || "Not provided"}</div>
+                      <Label className="text-gray-600">Phone Number</Label>
+                      <div className="font-medium mt-1 text-gray-900">{profile?.phone || "Not provided"}</div>
                     </div>
                     
                     <div>
-                      <Label className="text-muted-foreground">ID Number</Label>
-                      <div className="font-medium mt-1">{profile?.idNumber || "Not provided"}</div>
+                      <Label className="text-gray-600">ID Number</Label>
+                      <div className="font-medium mt-1 text-gray-900">{profile?.idNumber || "Not provided"}</div>
                     </div>
                   </div>
                 </div>
@@ -480,17 +491,17 @@ const DriverProfile: React.FC = () => {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Vehicle Information</CardTitle>
+              <CardTitle className="text-gray-900">Vehicle Information</CardTitle>
               <Dialog open={showAddCarDialog} onOpenChange={setShowAddCarDialog}>
                 <DialogTrigger asChild>
-                  <Button className="bg-schoolride-primary hover:bg-schoolride-secondary">
+                  <Button className="bg-schoolride-primary hover:bg-schoolride-secondary text-white">
                     <Plus className="h-4 w-4 mr-1" /> Add Vehicle
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Add Vehicle</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-gray-900">Add Vehicle</DialogTitle>
+                    <DialogDescription className="text-gray-700">
                       Add your vehicle details to use for rides
                     </DialogDescription>
                   </DialogHeader>
@@ -512,17 +523,17 @@ const DriverProfile: React.FC = () => {
                     <div key={car.id} className="border rounded-md p-4 bg-gray-50">
                       <div className="flex justify-between items-start">
                         <div>
-                          <div className="font-medium">
+                          <div className="font-medium text-gray-900">
                             {car.make} {car.model}
                           </div>
-                          <div className="text-sm text-muted-foreground mt-1">
+                          <div className="text-sm text-gray-700 mt-1">
                             {car.color} · {car.registrationNumber}
                           </div>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="text-red-500"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
                           onClick={() => handleDeleteCar(car.id)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -530,16 +541,16 @@ const DriverProfile: React.FC = () => {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
                         <div>
-                          <Label className="text-xs text-muted-foreground">Registration Number</Label>
-                          <div className="text-sm font-medium">{car.registrationNumber}</div>
+                          <Label className="text-xs text-gray-600">Registration Number</Label>
+                          <div className="text-sm font-medium text-gray-900">{car.registrationNumber}</div>
                         </div>
                         <div>
-                          <Label className="text-xs text-muted-foreground">VIN Number</Label>
-                          <div className="text-sm font-medium">{car.vinNumber || "Not provided"}</div>
+                          <Label className="text-xs text-gray-600">VIN Number</Label>
+                          <div className="text-sm font-medium text-gray-900">{car.vinNumber || "Not provided"}</div>
                         </div>
                         <div>
-                          <Label className="text-xs text-muted-foreground">Owner ID</Label>
-                          <div className="text-sm font-medium">{car.ownerIdNumber || "Not provided"}</div>
+                          <Label className="text-xs text-gray-600">Owner ID</Label>
+                          <div className="text-sm font-medium text-gray-900">{car.ownerIdNumber || "Not provided"}</div>
                         </div>
                       </div>
                     </div>
@@ -547,8 +558,12 @@ const DriverProfile: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-center py-6">
-                  <p className="text-muted-foreground">No vehicle information found</p>
-                  <Button variant="link" className="mt-2" onClick={() => setShowAddCarDialog(true)}>
+                  <p className="text-gray-700">No vehicle information found</p>
+                  <Button 
+                    variant="link" 
+                    className="mt-2 text-schoolride-primary"
+                    onClick={() => setShowAddCarDialog(true)}
+                  >
                     Add Vehicle
                   </Button>
                 </div>

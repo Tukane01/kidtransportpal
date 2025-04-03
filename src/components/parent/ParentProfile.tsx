@@ -198,6 +198,7 @@ const ParentProfile: React.FC = () => {
       }));
       
       setChildren(formattedChildren);
+      toast.success("Data refreshed successfully");
     } catch (error) {
       console.error("Error refreshing data:", error);
       toast.error("Failed to refresh data");
@@ -209,7 +210,7 @@ const ParentProfile: React.FC = () => {
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
     try {
-      // First delete the user from the auth system
+      // Call the delete_user database function
       const { error } = await supabase.rpc('delete_user');
       
       if (error) throw error;
@@ -220,7 +221,7 @@ const ParentProfile: React.FC = () => {
       navigate('/auth');
     } catch (error) {
       console.error("Error deleting account:", error);
-      toast.error("Failed to delete account");
+      toast.error("Failed to delete account: " + (error as Error).message);
     } finally {
       setIsDeleting(false);
     }
@@ -234,13 +235,14 @@ const ParentProfile: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold font-heading">My Profile</h1>
+        <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
         <div className="flex space-x-2">
           <Button 
             variant="outline" 
             size="sm" 
             onClick={handleRefresh}
             disabled={isRefreshing}
+            className="text-gray-800 border-gray-300"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -248,23 +250,23 @@ const ParentProfile: React.FC = () => {
           
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">
+              <Button variant="destructive" size="sm" className="text-white">
                 <Trash2 className="h-4 w-4 mr-2" />
                 Delete Account
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
+                <AlertDialogTitle className="text-gray-900">Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription className="text-gray-700">
                   This action cannot be undone. This will permanently delete your account
                   and remove all your data from our servers.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel className="text-gray-800 bg-gray-100 hover:bg-gray-200">Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  className="bg-red-600 hover:bg-red-700"
+                  className="bg-red-600 hover:bg-red-700 text-white"
                   onClick={handleDeleteAccount}
                   disabled={isDeleting}
                 >
@@ -284,45 +286,45 @@ const ParentProfile: React.FC = () => {
       </div>
       
       <Tabs defaultValue="personal">
-        <TabsList className="mb-6">
-          <TabsTrigger value="personal">Personal Details</TabsTrigger>
-          <TabsTrigger value="children">Children</TabsTrigger>
-          <TabsTrigger value="payment">Payment Methods</TabsTrigger>
+        <TabsList className="mb-6 bg-gray-100">
+          <TabsTrigger value="personal" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 text-gray-700">Personal Details</TabsTrigger>
+          <TabsTrigger value="children" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 text-gray-700">Children</TabsTrigger>
+          <TabsTrigger value="payment" className="data-[state=active]:bg-white data-[state=active]:text-gray-900 text-gray-700">Payment Methods</TabsTrigger>
         </TabsList>
         
         <TabsContent value="personal">
           <Card>
             <CardHeader className="pb-4">
               <div className="flex justify-between items-center">
-                <CardTitle>Personal Information</CardTitle>
+                <CardTitle className="text-gray-900">Personal Information</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4">
                 <Avatar className="h-24 w-24">
                   <AvatarImage src={profile?.profileImage} alt={profile?.name} />
-                  <AvatarFallback className="text-2xl">
+                  <AvatarFallback className="text-2xl bg-schoolride-primary text-white">
                     {getInitials()}
                   </AvatarFallback>
                 </Avatar>
                 
                 <div className="flex-1">
-                  <h3 className="text-lg font-medium">
+                  <h3 className="text-lg font-medium text-gray-900">
                     {profile?.name || "Set your name"} {profile?.surname || ""}
                   </h3>
-                  <p className="text-muted-foreground">{user?.email || "No email set"}</p>
-                  <p className="text-muted-foreground">{profile?.phone || "No phone set"}</p>
-                  <p className="text-muted-foreground mt-1">ID: {profile?.idNumber || "Not provided"}</p>
+                  <p className="text-gray-600">{user?.email || "No email set"}</p>
+                  <p className="text-gray-600">{profile?.phone || "No phone set"}</p>
+                  <p className="text-gray-600 mt-1">ID: {profile?.idNumber || "Not provided"}</p>
                   
                   <div className="mt-2">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" className="text-gray-800 border-gray-300">
                       Change Photo
                     </Button>
                   </div>
                 </div>
               </div>
               
-              <Separator />
+              <Separator className="bg-gray-200" />
               
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmitProfile)} className="space-y-4">
@@ -332,11 +334,11 @@ const ParentProfile: React.FC = () => {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>First Name</FormLabel>
+                          <FormLabel className="text-gray-700">First Name</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={isLoading} />
+                            <Input {...field} disabled={isLoading} className="bg-white text-gray-800 border-gray-300" />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-red-600" />
                         </FormItem>
                       )}
                     />
@@ -346,11 +348,11 @@ const ParentProfile: React.FC = () => {
                       name="surname"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Surname</FormLabel>
+                          <FormLabel className="text-gray-700">Surname</FormLabel>
                           <FormControl>
-                            <Input {...field} disabled={isLoading} />
+                            <Input {...field} disabled={isLoading} className="bg-white text-gray-800 border-gray-300" />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-red-600" />
                         </FormItem>
                       )}
                     />
@@ -361,11 +363,11 @@ const ParentProfile: React.FC = () => {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel className="text-gray-700">Email</FormLabel>
                         <FormControl>
-                          <Input {...field} disabled={true} />
+                          <Input {...field} disabled={true} className="bg-gray-100 text-gray-800 border-gray-300" />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-red-600" />
                       </FormItem>
                     )}
                   />
@@ -375,11 +377,11 @@ const ParentProfile: React.FC = () => {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
+                        <FormLabel className="text-gray-700">Phone Number</FormLabel>
                         <FormControl>
-                          <Input {...field} disabled={isLoading} />
+                          <Input {...field} disabled={isLoading} className="bg-white text-gray-800 border-gray-300" />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-red-600" />
                       </FormItem>
                     )}
                   />
@@ -389,18 +391,18 @@ const ParentProfile: React.FC = () => {
                     name="idNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>ID Number</FormLabel>
+                        <FormLabel className="text-gray-700">ID Number</FormLabel>
                         <FormControl>
-                          <Input {...field} disabled={isLoading} />
+                          <Input {...field} disabled={isLoading} className="bg-white text-gray-800 border-gray-300" />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage className="text-red-600" />
                       </FormItem>
                     )}
                   />
                   
                   <Button
                     type="submit"
-                    className="w-full sm:w-auto bg-schoolride-primary hover:bg-schoolride-secondary"
+                    className="w-full sm:w-auto bg-schoolride-primary hover:bg-schoolride-secondary text-white"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -422,17 +424,17 @@ const ParentProfile: React.FC = () => {
           <Card>
             <CardHeader className="pb-4">
               <div className="flex justify-between items-center">
-                <CardTitle>Children</CardTitle>
+                <CardTitle className="text-gray-900">Children</CardTitle>
                 <Dialog open={showAddChildDialog} onOpenChange={setShowAddChildDialog}>
                   <DialogTrigger asChild>
-                    <Button className="bg-schoolride-primary hover:bg-schoolride-secondary">
+                    <Button className="bg-schoolride-primary hover:bg-schoolride-secondary text-white">
                       <Plus className="h-4 w-4 mr-1" /> Add Child
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Add Child</DialogTitle>
-                      <DialogDescription>
+                      <DialogTitle className="text-gray-900">Add Child</DialogTitle>
+                      <DialogDescription className="text-gray-700">
                         Add your child's details to request rides for them
                       </DialogDescription>
                     </DialogHeader>
@@ -457,14 +459,14 @@ const ParentProfile: React.FC = () => {
                       className="border rounded-md p-4 bg-gray-50 flex justify-between items-center"
                     >
                       <div>
-                        <div className="font-medium">
+                        <div className="font-medium text-gray-900">
                           {child.name} {child.surname}
                         </div>
-                        <div className="text-sm text-muted-foreground">ID: {child.idNumber || "Not provided"}</div>
-                        <div className="text-sm text-muted-foreground mt-1">
+                        <div className="text-sm text-gray-700">ID: {child.idNumber || "Not provided"}</div>
+                        <div className="text-sm text-gray-700 mt-1">
                           School: {child.schoolName}
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-sm text-gray-700">
                           Address: {child.schoolAddress}
                         </div>
                       </div>
@@ -473,7 +475,7 @@ const ParentProfile: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="text-red-500"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
                             onClick={() => setChildToDelete(child)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -481,8 +483,8 @@ const ParentProfile: React.FC = () => {
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
-                            <DialogTitle>Delete Child</DialogTitle>
-                            <DialogDescription>
+                            <DialogTitle className="text-gray-900">Delete Child</DialogTitle>
+                            <DialogDescription className="text-gray-700">
                               Are you sure you want to remove {child.name} {child.surname}? This action cannot be undone.
                             </DialogDescription>
                           </DialogHeader>
@@ -490,12 +492,14 @@ const ParentProfile: React.FC = () => {
                             <Button 
                               variant="outline" 
                               onClick={() => setChildToDelete(null)}
+                              className="text-gray-800 border-gray-300"
                             >
                               Cancel
                             </Button>
                             <Button 
                               variant="destructive"
                               onClick={handleDeleteChild}
+                              className="text-white"
                             >
                               Delete
                             </Button>
@@ -507,7 +511,7 @@ const ParentProfile: React.FC = () => {
                 </div>
               ) : (
                 <div className="text-center py-10">
-                  <p className="text-muted-foreground">No children added yet</p>
+                  <p className="text-gray-700">No children added yet</p>
                   <Button 
                     variant="link" 
                     className="text-schoolride-primary"
@@ -525,15 +529,15 @@ const ParentProfile: React.FC = () => {
           <Card>
             <CardHeader className="pb-4">
               <div className="flex justify-between items-center">
-                <CardTitle>Payment Methods</CardTitle>
-                <Button className="bg-schoolride-primary hover:bg-schoolride-secondary">
+                <CardTitle className="text-gray-900">Payment Methods</CardTitle>
+                <Button className="bg-schoolride-primary hover:bg-schoolride-secondary text-white">
                   <Plus className="h-4 w-4 mr-1" /> Add Payment
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-center py-10">
-                <p className="text-muted-foreground">No payment methods added yet</p>
+                <p className="text-gray-700">No payment methods added yet</p>
                 <Button variant="link" className="text-schoolride-primary">
                   Add your first payment method
                 </Button>

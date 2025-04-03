@@ -94,10 +94,20 @@
 
   body {
     @apply bg-schoolride-background text-schoolride-text font-sans;
+    color: #333333; /* Ensuring base text is dark enough for readability */
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading;
+    @apply font-heading text-gray-900;
+  }
+
+  label, button, input, textarea, select {
+    @apply text-gray-800; /* Ensuring form elements have readable text */
+  }
+
+  /* Ensure links are visible */
+  a {
+    @apply text-schoolride-primary font-medium;
   }
 }
 
@@ -115,7 +125,7 @@
   }
 
   .input-primary {
-    @apply border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-schoolride-primary;
+    @apply border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-schoolride-primary text-gray-800;
   }
 
   .card {
@@ -123,6 +133,19 @@
   }
 
   .card-header {
-    @apply font-heading font-bold text-xl mb-4 text-schoolride-text;
+    @apply font-heading font-bold text-xl mb-4 text-gray-900;
+  }
+  
+  /* Improved text contrast for form elements */
+  .form-label {
+    @apply text-gray-700 font-medium;
+  }
+  
+  .form-input {
+    @apply border border-gray-300 bg-white text-gray-800;
+  }
+  
+  .text-muted {
+    @apply text-gray-600; /* Slightly darker than the default muted text */
   }
 }
