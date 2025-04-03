@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -11,6 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Switch } from "@/components/ui/switch";
 import ChildForm from "@/components/ChildForm";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const ParentRegisterForm: React.FC = () => {
   const { register } = useAuth();
@@ -18,6 +20,7 @@ const ParentRegisterForm: React.FC = () => {
   const [hasChild, setHasChild] = useState(false);
   const [showChildForm, setShowChildForm] = useState(false);
   const [childFormCompleted, setChildFormCompleted] = useState(false);
+  const [childData, setChildData] = useState(null);
   
   const form = useForm<z.infer<typeof parentRegistrationSchema>>({
     resolver: zodResolver(parentRegistrationSchema),
@@ -57,6 +60,32 @@ const ParentRegisterForm: React.FC = () => {
         idNumber: values.idNumber
       });
       
+      if (success && childData) {
+        // Get the newly created user
+        const { data: authData } = await supabase.auth.getUser();
+        
+        if (authData?.user) {
+          // Insert the child data with the parent's user ID
+          const { error: childError } = await supabase
+            .from('children')
+            .insert({
+              parent_id: authData.user.id,
+              name: childData.name,
+              surname: childData.surname,
+              school_name: childData.schoolName,
+              school_address: childData.schoolAddress,
+              id_number: childData.idNumber
+            });
+            
+          if (childError) {
+            console.error("Error saving child data:", childError);
+            toast.error("Registration successful but failed to save child data");
+          } else {
+            toast.success("Registration successful with child data saved");
+          }
+        }
+      }
+      
       if (success) {
         toast.success("Registration successful");
       }
@@ -73,7 +102,8 @@ const ParentRegisterForm: React.FC = () => {
     form.setValue("hasChild", checked);
   };
   
-  const handleChildFormComplete = () => {
+  const handleChildFormComplete = (data) => {
+    setChildData(data);
     setChildFormCompleted(true);
     setShowChildForm(false);
     form.handleSubmit(onSubmit)();
@@ -240,7 +270,7 @@ const ParentRegisterForm: React.FC = () => {
             
             <Button
               type="submit"
-              className="w-full bg-schoolride-primary hover:bg-schoolride-secondary"
+              className="w-full bg-schoolride-primary hover:bg-schoolride-secondary text-white"
               disabled={isLoading}
             >
               {isLoading ? (

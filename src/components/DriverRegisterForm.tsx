@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import CarForm from "@/components/CarForm";
 import { toast } from "sonner";
 import { checkAgeFromIdNumber } from "@/utils/validation";
+import { supabase } from "@/integrations/supabase/client";
 
 const DriverRegisterForm: React.FC = () => {
   const { register } = useAuth();
@@ -20,6 +21,7 @@ const DriverRegisterForm: React.FC = () => {
   const [hasCar, setHasCar] = useState(false);
   const [showCarForm, setShowCarForm] = useState(false);
   const [carFormCompleted, setCarFormCompleted] = useState(false);
+  const [carData, setCarData] = useState(null);
   
   const form = useForm<z.infer<typeof driverRegistrationSchema>>({
     resolver: zodResolver(driverRegistrationSchema),
@@ -68,6 +70,33 @@ const DriverRegisterForm: React.FC = () => {
         idNumber: values.idNumber
       });
       
+      if (success && carData) {
+        // Get the newly created user
+        const { data: authData } = await supabase.auth.getUser();
+        
+        if (authData?.user) {
+          // Insert the car data with the driver's user ID
+          const { error: carError } = await supabase
+            .from('cars')
+            .insert({
+              owner_id: authData.user.id,
+              make: carData.make,
+              model: carData.model,
+              registration_number: carData.registrationNumber,
+              color: carData.color,
+              vin_number: carData.vinNumber,
+              owner_id_number: values.idNumber
+            });
+            
+          if (carError) {
+            console.error("Error saving car data:", carError);
+            toast.error("Registration successful but failed to save car data");
+          } else {
+            toast.success("Registration successful with car data saved");
+          }
+        }
+      }
+      
       if (success) {
         toast.success("Registration successful");
       }
@@ -84,10 +113,10 @@ const DriverRegisterForm: React.FC = () => {
     form.setValue("hasCar", checked);
   };
   
-  const handleCarFormComplete = () => {
+  const handleCarFormComplete = (data) => {
+    setCarData(data);
     setCarFormCompleted(true);
     setShowCarForm(false);
-    // Now try to submit the driver form again
     form.handleSubmit(onSubmit)();
   };
   
@@ -256,7 +285,7 @@ const DriverRegisterForm: React.FC = () => {
             
             <Button
               type="submit"
-              className="w-full bg-schoolride-primary hover:bg-schoolride-secondary"
+              className="w-full bg-schoolride-primary hover:bg-schoolride-secondary text-white"
               disabled={isLoading}
             >
               {isLoading ? (
