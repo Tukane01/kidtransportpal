@@ -1,26 +1,26 @@
 
 import React, { useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useSupabaseAuth } from "@/context/SupabaseAuthContext";
 import { Loader2 } from "lucide-react";
 import ParentDashboard from "./parent/ParentDashboard";
 import DriverDashboard from "./driver/DriverDashboard";
 import { useNavigate } from "react-router-dom";
 
 const Layout: React.FC = () => {
-  const { currentUser, isLoading, isAuthenticated, refreshUserProfile } = useAuth();
+  const { isAuthenticated, isLoading, profile, refreshProfile } = useSupabaseAuth();
   const navigate = useNavigate();
   
   // Refresh user profile data when layout component mounts
   useEffect(() => {
-    if (isAuthenticated && currentUser) {
+    if (isAuthenticated && profile) {
       // Silently refresh user profile without showing toasts
-      refreshUserProfile(false).catch(error => {
+      refreshProfile(false).catch(error => {
         console.error("Error refreshing profile:", error);
       });
     } else if (!isAuthenticated && !isLoading) {
       navigate('/auth');
     }
-  }, [isAuthenticated, currentUser, refreshUserProfile, isLoading, navigate]);
+  }, [isAuthenticated, profile, refreshProfile, isLoading, navigate]);
   
   if (isLoading) {
     return (
@@ -34,7 +34,7 @@ const Layout: React.FC = () => {
     return null; // We're redirecting in the useEffect, so just return null
   }
   
-  return currentUser?.role === "parent" ? <ParentDashboard /> : <DriverDashboard />;
+  return profile?.role === "parent" ? <ParentDashboard /> : <DriverDashboard />;
 };
 
 export default Layout;

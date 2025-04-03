@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -10,9 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { nameSchema, phoneSchema, emailSchema } from "@/utils/validation";
-import { useAuth } from "@/context/AuthContext";
-import { Child, useRide } from "@/context/RideContext";
-import { Loader2, Plus, Trash2, RefreshCw, AlertCircle } from "lucide-react";
+import { useSupabaseAuth } from "@/context/SupabaseAuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2, Plus, Trash2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ChildForm from "@/components/ChildForm";
@@ -43,37 +43,104 @@ const profileSchema = z.object({
   surname: nameSchema,
   email: emailSchema,
   phone: phoneSchema,
+  idNumber: z.string().optional(),
 });
 
+type Child = {
+  id: string;
+  name: string;
+  surname: string;
+  schoolName: string;
+  schoolAddress: string;
+  idNumber?: string;
+};
+
 const ParentProfile: React.FC = () => {
-  const { currentUser, updateUserProfile, refreshUserProfile, deleteAccount } = useAuth();
-  const { children, deleteChild } = useRide();
+  const { profile, user, updateProfile, refreshProfile, signOut } = useSupabaseAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [childToDelete, setChildToDelete] = useState<Child | null>(null);
   const [showAddChildDialog, setShowAddChildDialog] = useState(false);
+  const [children, setChildren] = useState<Child[]>([]);
+  const [isLoadingChildren, setIsLoadingChildren] = useState(true);
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    const fetchChildren = async () => {
+      setIsLoadingChildren(true);
+      try {
+        const { data, error } = await supabase
+          .from('children')
+          .select('*')
+          .eq('parent_id', user?.id);
+          
+        if (error) throw error;
+        
+        // Transform from snake_case to camelCase
+        const formattedChildren = data.map(child => ({
+          id: child.id,
+          name: child.name,
+          surname: child.surname,
+          schoolName: child.school_name,
+          schoolAddress: child.school_address,
+          idNumber: child.id_number
+        }));
+        
+        setChildren(formattedChildren);
+      } catch (error) {
+        console.error('Error fetching children:', error);
+        toast.error('Failed to load children');
+      } finally {
+        setIsLoadingChildren(false);
+      }
+    };
+    
+    if (user) {
+      fetchChildren();
+    }
+  }, [user]);
   
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: currentUser?.name || "",
-      surname: currentUser?.surname || "",
-      email: currentUser?.email || "",
-      phone: currentUser?.phone || "",
+      name: profile?.name || "",
+      surname: profile?.surname || "",
+      email: user?.email || "",
+      phone: profile?.phone || "",
+      idNumber: profile?.idNumber || "",
     },
   });
+
+  // Update form when profile changes
+  useEffect(() => {
+    if (profile && user) {
+      form.reset({
+        name: profile.name || "",
+        surname: profile.surname || "",
+        email: user.email || "",
+        phone: profile.phone || "",
+        idNumber: profile.idNumber || "",
+      });
+    }
+  }, [profile, user, form]);
   
   const onSubmitProfile = async (values: z.infer<typeof profileSchema>) => {
     setIsLoading(true);
     
     try {
-      const success = await updateUserProfile(values);
+      const { error } = await updateProfile({
+        name: values.name,
+        surname: values.surname,
+        phone: values.phone,
+        idNumber: values.idNumber,
+      });
       
-      if (success) {
-        toast.success("Profile updated successfully");
+      if (error) {
+        throw error;
       }
+      
+      toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error("Failed to update profile");
@@ -86,8 +153,16 @@ const ParentProfile: React.FC = () => {
     if (!childToDelete) return;
     
     try {
-      await deleteChild(childToDelete.id);
+      const { error } = await supabase
+        .from('children')
+        .delete()
+        .eq('id', childToDelete.id);
+        
+      if (error) throw error;
+      
+      setChildren(prev => prev.filter(child => child.id !== childToDelete.id));
       setChildToDelete(null);
+      toast.success("Child removed successfully");
     } catch (error) {
       console.error("Error deleting child:", error);
       toast.error("Failed to delete child");
@@ -96,15 +171,36 @@ const ParentProfile: React.FC = () => {
   
   const handleAddChildComplete = () => {
     setShowAddChildDialog(false);
+    refreshProfile(true); // Refresh to get updated children
     toast.success("Child added successfully");
   };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await refreshUserProfile(true);
+      await refreshProfile(true);
+      // Fetch children again
+      const { data, error } = await supabase
+        .from('children')
+        .select('*')
+        .eq('parent_id', user?.id);
+        
+      if (error) throw error;
+      
+      // Transform from snake_case to camelCase
+      const formattedChildren = data.map(child => ({
+        id: child.id,
+        name: child.name,
+        surname: child.surname,
+        schoolName: child.school_name,
+        schoolAddress: child.school_address,
+        idNumber: child.id_number
+      }));
+      
+      setChildren(formattedChildren);
     } catch (error) {
-      console.error("Error refreshing profile:", error);
+      console.error("Error refreshing data:", error);
+      toast.error("Failed to refresh data");
     } finally {
       setIsRefreshing(false);
     }
@@ -113,10 +209,15 @@ const ParentProfile: React.FC = () => {
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
     try {
-      const success = await deleteAccount();
-      if (success) {
-        navigate('/auth');
-      }
+      // First delete the user from the auth system
+      const { error } = await supabase.rpc('delete_user');
+      
+      if (error) throw error;
+      
+      // Sign out the user
+      await signOut();
+      toast.success("Account deleted successfully");
+      navigate('/auth');
     } catch (error) {
       console.error("Error deleting account:", error);
       toast.error("Failed to delete account");
@@ -126,8 +227,8 @@ const ParentProfile: React.FC = () => {
   };
 
   const getInitials = () => {
-    if (!currentUser?.name || !currentUser?.surname) return "U";
-    return `${currentUser.name.charAt(0)}${currentUser.surname.charAt(0)}`.toUpperCase();
+    if (!profile?.name || !profile?.surname) return "U";
+    return `${profile.name.charAt(0)}${profile.surname.charAt(0)}`.toUpperCase();
   };
   
   return (
@@ -199,7 +300,7 @@ const ParentProfile: React.FC = () => {
             <CardContent className="space-y-6">
               <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={currentUser?.profileImage} alt={currentUser?.name} />
+                  <AvatarImage src={profile?.profileImage} alt={profile?.name} />
                   <AvatarFallback className="text-2xl">
                     {getInitials()}
                   </AvatarFallback>
@@ -207,11 +308,11 @@ const ParentProfile: React.FC = () => {
                 
                 <div className="flex-1">
                   <h3 className="text-lg font-medium">
-                    {currentUser?.name || "Set your name"} {currentUser?.surname || ""}
+                    {profile?.name || "Set your name"} {profile?.surname || ""}
                   </h3>
-                  <p className="text-muted-foreground">{currentUser?.email || "No email set"}</p>
-                  <p className="text-muted-foreground">{currentUser?.phone || "No phone set"}</p>
-                  <p className="text-muted-foreground mt-1">ID: {currentUser?.idNumber || "Not provided"}</p>
+                  <p className="text-muted-foreground">{user?.email || "No email set"}</p>
+                  <p className="text-muted-foreground">{profile?.phone || "No phone set"}</p>
+                  <p className="text-muted-foreground mt-1">ID: {profile?.idNumber || "Not provided"}</p>
                   
                   <div className="mt-2">
                     <Button variant="outline" size="sm">
@@ -262,7 +363,7 @@ const ParentProfile: React.FC = () => {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input {...field} disabled={isLoading} />
+                          <Input {...field} disabled={true} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -275,6 +376,20 @@ const ParentProfile: React.FC = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Phone Number</FormLabel>
+                        <FormControl>
+                          <Input {...field} disabled={isLoading} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="idNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>ID Number</FormLabel>
                         <FormControl>
                           <Input {...field} disabled={isLoading} />
                         </FormControl>
@@ -330,7 +445,11 @@ const ParentProfile: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent>
-              {children && children.length > 0 ? (
+              {isLoadingChildren ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-schoolride-primary" />
+                </div>
+              ) : children && children.length > 0 ? (
                 <div className="space-y-4">
                   {children.map((child) => (
                     <div

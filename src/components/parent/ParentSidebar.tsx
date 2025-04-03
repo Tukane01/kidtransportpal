@@ -1,19 +1,19 @@
 
 import React from "react";
 import { useUI } from "@/context/UIContext";
-import { useAuth } from "@/context/AuthContext";
+import { useSupabaseAuth } from "@/context/SupabaseAuthContext";
 import { Button } from "@/components/ui/button";
 import { Home, Clock, User, Wallet, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/Logo";
 
 const ParentSidebar: React.FC = () => {
-  const { currentUser, logout } = useAuth();
+  const { profile, signOut } = useSupabaseAuth();
   const { activeTab, setActiveTab } = useUI();
   
   const getInitials = () => {
-    if (!currentUser?.name || !currentUser?.surname) return "U";
-    return `${currentUser.name.charAt(0)}${currentUser.surname.charAt(0)}`.toUpperCase();
+    if (!profile?.name || !profile?.surname) return "U";
+    return `${profile.name.charAt(0)}${profile.surname.charAt(0)}`.toUpperCase();
   };
   
   const navItems = [
@@ -24,7 +24,7 @@ const ParentSidebar: React.FC = () => {
   ];
   
   const handleLogout = async () => {
-    await logout();
+    await signOut();
   };
   
   return (
@@ -36,15 +36,15 @@ const ParentSidebar: React.FC = () => {
       <div className="p-4 border-b">
         <div className="flex items-center space-x-3">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={currentUser?.profileImage} alt={currentUser?.name} />
+            <AvatarImage src={profile?.profileImage} alt={profile?.name} />
             <AvatarFallback className="bg-schoolride-primary text-white font-medium">{getInitials()}</AvatarFallback>
           </Avatar>
           
           <div>
             <div className="font-medium text-gray-800 text-base">
-              {currentUser?.name || "User"} {currentUser?.surname || ""}
+              {profile?.name || "User"} {profile?.surname || ""}
             </div>
-            <div className="text-xs text-muted-foreground font-medium">{currentUser?.email || "No email"}</div>
+            <div className="text-xs text-muted-foreground font-medium">{profile?.email || "No email"}</div>
           </div>
         </div>
       </div>
