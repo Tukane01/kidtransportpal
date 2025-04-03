@@ -16,6 +16,15 @@ export interface Car {
   ownerIdNumber: string;
 }
 
+export interface Child {
+  id: string;
+  name: string;
+  surname: string;
+  schoolName: string;
+  schoolAddress: string;
+  idNumber?: string;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -26,6 +35,7 @@ export interface UserProfile {
   profileImage?: string;
   role: UserRole;
   cars?: Car[];
+  children?: Child[];
 }
 
 interface AuthContextType {
@@ -104,6 +114,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         role: data.role as UserRole || 'parent',
       };
 
+      // Fetch role-specific data
       if (data && data.role === 'driver') {
         const { data: carsData, error: carsError } = await supabase
           .from('cars')
@@ -122,6 +133,24 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           }));
         } else if (carsError) {
           console.error("Error fetching cars:", carsError);
+        }
+      } else if (data && data.role === 'parent') {
+        const { data: childrenData, error: childrenError } = await supabase
+          .from('children')
+          .select('*')
+          .eq('parent_id', userId);
+        
+        if (!childrenError && childrenData) {
+          userProfile.children = childrenData.map(child => ({
+            id: child.id,
+            name: child.name,
+            surname: child.surname,
+            schoolName: child.school_name,
+            schoolAddress: child.school_address,
+            idNumber: child.id_number
+          }));
+        } else if (childrenError) {
+          console.error("Error fetching children:", childrenError);
         }
       }
 

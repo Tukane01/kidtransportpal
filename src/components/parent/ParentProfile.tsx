@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { nameSchema, phoneSchema, emailSchema } from "@/utils/validation";
 import { useAuth } from "@/context/AuthContext";
 import { Child, useRide } from "@/context/RideContext";
-import { Loader2, Plus, Trash2, RefreshCw } from "lucide-react";
+import { Loader2, Plus, Trash2, RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import ChildForm from "@/components/ChildForm";
@@ -25,6 +25,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useNavigate } from "react-router-dom";
 
 const profileSchema = z.object({
   name: nameSchema,
@@ -34,12 +46,14 @@ const profileSchema = z.object({
 });
 
 const ParentProfile: React.FC = () => {
-  const { currentUser, updateUserProfile, refreshUserProfile } = useAuth();
+  const { currentUser, updateUserProfile, refreshUserProfile, deleteAccount } = useAuth();
   const { children, deleteChild } = useRide();
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [childToDelete, setChildToDelete] = useState<Child | null>(null);
   const [showAddChildDialog, setShowAddChildDialog] = useState(false);
+  const navigate = useNavigate();
   
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -96,6 +110,21 @@ const ParentProfile: React.FC = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      const success = await deleteAccount();
+      if (success) {
+        navigate('/auth');
+      }
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      toast.error("Failed to delete account");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const getInitials = () => {
     if (!currentUser?.name || !currentUser?.surname) return "U";
     return `${currentUser.name.charAt(0)}${currentUser.surname.charAt(0)}`.toUpperCase();
@@ -105,15 +134,52 @@ const ParentProfile: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold font-heading">My Profile</h1>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Account
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete your account
+                  and remove all your data from our servers.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-red-600 hover:bg-red-700"
+                  onClick={handleDeleteAccount}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    "Delete Account"
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
       
       <Tabs defaultValue="personal">
@@ -264,7 +330,7 @@ const ParentProfile: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent>
-              {children.length > 0 ? (
+              {children && children.length > 0 ? (
                 <div className="space-y-4">
                   {children.map((child) => (
                     <div
@@ -275,9 +341,12 @@ const ParentProfile: React.FC = () => {
                         <div className="font-medium">
                           {child.name} {child.surname}
                         </div>
-                        <div className="text-sm text-muted-foreground">ID: {child.idNumber}</div>
+                        <div className="text-sm text-muted-foreground">ID: {child.idNumber || "Not provided"}</div>
                         <div className="text-sm text-muted-foreground mt-1">
                           School: {child.schoolName}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Address: {child.schoolAddress}
                         </div>
                       </div>
                       <Dialog>

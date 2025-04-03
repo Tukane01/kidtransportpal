@@ -29,6 +29,7 @@ interface AuthContextType {
   updateUserProfile: (data: Partial<User>) => Promise<boolean>;
   deleteUserProfile: () => Promise<boolean>;
   refreshUserProfile: (showToast?: boolean) => Promise<void>;
+  deleteAccount: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -197,6 +198,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const deleteAccount = async () => {
+    try {
+      if (!user) return false;
+      
+      const { error } = await supabase.auth.admin.deleteUser(user.id);
+      
+      if (error) {
+        toast.error("Failed to delete account: " + error.message);
+        return false;
+      }
+      
+      await signOut();
+      toast.success("Account deleted successfully");
+      return true;
+    } catch (error: any) {
+      toast.error("Failed to delete account: " + error.message);
+      return false;
+    }
+  };
+
   const refreshUserProfile = async (showToast: boolean = false) => {
     try {
       await refreshProfile(false); // Always do silent refresh
@@ -221,7 +242,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     updateUserProfile,
     deleteUserProfile,
-    refreshUserProfile
+    refreshUserProfile,
+    deleteAccount
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

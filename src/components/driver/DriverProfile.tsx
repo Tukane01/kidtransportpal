@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/context/AuthContext";
-import { Camera, User, Car as CarIcon, CheckCircle, RefreshCw } from "lucide-react";
+import { Camera, User, Car as CarIcon, CheckCircle, RefreshCw, Trash2, Plus } from "lucide-react";
 import { 
   Form,
   FormControl,
@@ -31,12 +31,26 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useNavigate } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import CarForm from "@/components/CarForm";
 
 const DriverProfile: React.FC = () => {
-  const { currentUser, updateUserProfile, refreshUserProfile } = useAuth();
+  const { currentUser, updateUserProfile, refreshUserProfile, deleteAccount } = useAuth();
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showAddCarDialog, setShowAddCarDialog] = useState(false);
+  const navigate = useNavigate();
   
   const getInitials = () => {
     if (!currentUser?.name || !currentUser?.surname) return "U";
@@ -48,6 +62,7 @@ const DriverProfile: React.FC = () => {
     surname: z.string().min(1, "Surname is required"),
     email: z.string().email("Invalid email format"),
     phone: z.string().min(7, "Phone number must be valid"),
+    idNumber: z.string().optional(),
   });
   
   type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -59,6 +74,7 @@ const DriverProfile: React.FC = () => {
       surname: currentUser?.surname || "",
       email: currentUser?.email || "",
       phone: currentUser?.phone || "",
+      idNumber: currentUser?.idNumber || "",
     },
   });
   
@@ -90,20 +106,78 @@ const DriverProfile: React.FC = () => {
       setIsRefreshing(false);
     }
   };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      const success = await deleteAccount();
+      if (success) {
+        navigate('/auth');
+      }
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      toast.error("Failed to delete account");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleAddCarComplete = () => {
+    setShowAddCarDialog(false);
+    toast.success("Vehicle added successfully");
+    handleRefresh();
+  };
   
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold font-heading">Driver Profile</h1>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Account
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete your account
+                  and remove all your data from our servers.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-red-600 hover:bg-red-700"
+                  onClick={handleDeleteAccount}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    "Delete Account"
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -228,6 +302,20 @@ const DriverProfile: React.FC = () => {
                           </FormItem>
                         )}
                       />
+
+                      <FormField
+                        control={profileForm.control}
+                        name="idNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>ID Number</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
                     
                     <div className="flex justify-end gap-3">
@@ -267,6 +355,11 @@ const DriverProfile: React.FC = () => {
                       <Label className="text-muted-foreground">Phone Number</Label>
                       <div className="font-medium mt-1">{currentUser?.phone || "Not provided"}</div>
                     </div>
+                    
+                    <div>
+                      <Label className="text-muted-foreground">ID Number</Label>
+                      <div className="font-medium mt-1">{currentUser?.idNumber || "Not provided"}</div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -274,8 +367,27 @@ const DriverProfile: React.FC = () => {
           </Card>
           
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Vehicle Information</CardTitle>
+              <Dialog open={showAddCarDialog} onOpenChange={setShowAddCarDialog}>
+                <DialogTrigger asChild>
+                  <Button className="bg-schoolride-primary hover:bg-schoolride-secondary">
+                    <Plus className="h-4 w-4 mr-1" /> Add Vehicle
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Vehicle</DialogTitle>
+                    <DialogDescription>
+                      Add your vehicle details to use for rides
+                    </DialogDescription>
+                  </DialogHeader>
+                  <CarForm 
+                    onComplete={handleAddCarComplete} 
+                    onCancel={() => setShowAddCarDialog(false)} 
+                  />
+                </DialogContent>
+              </Dialog>
             </CardHeader>
             <CardContent>
               {currentUser?.cars && currentUser.cars.length > 0 ? (
@@ -297,6 +409,10 @@ const DriverProfile: React.FC = () => {
                           <Label className="text-xs text-muted-foreground">VIN Number</Label>
                           <div className="text-sm font-medium">{car.vinNumber || "Not provided"}</div>
                         </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Owner ID</Label>
+                          <div className="text-sm font-medium">{car.ownerIdNumber || "Not provided"}</div>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -304,7 +420,7 @@ const DriverProfile: React.FC = () => {
               ) : (
                 <div className="text-center py-6">
                   <p className="text-muted-foreground">No vehicle information found</p>
-                  <Button variant="link" className="mt-2">
+                  <Button variant="link" className="mt-2" onClick={() => setShowAddCarDialog(true)}>
                     Add Vehicle
                   </Button>
                 </div>

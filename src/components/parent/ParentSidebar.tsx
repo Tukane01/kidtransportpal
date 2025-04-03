@@ -23,6 +23,10 @@ const ParentSidebar: React.FC = () => {
     { id: "wallet", label: "Wallet", icon: <Wallet size={18} /> },
   ];
   
+  const handleLogout = async () => {
+    await logout();
+  };
+  
   return (
     <div className="w-64 hidden md:flex flex-col bg-white shadow-md h-screen">
       <div className="p-4 flex justify-center">
@@ -70,7 +74,7 @@ const ParentSidebar: React.FC = () => {
         <Button 
           variant="ghost" 
           className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700 font-medium"
-          onClick={logout}
+          onClick={handleLogout}
         >
           <LogOut size={18} className="mr-3" />
           Logout
