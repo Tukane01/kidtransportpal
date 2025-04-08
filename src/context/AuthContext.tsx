@@ -1,7 +1,7 @@
-
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { toast } from "sonner";
 import { useSupabaseAuth, UserProfile, UserRole, Car } from "./SupabaseAuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export type { UserRole, Car };
 

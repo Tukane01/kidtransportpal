@@ -133,6 +133,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           }));
         } else if (carsError) {
           console.error("Error fetching cars:", carsError);
+          toast.error("Failed to fetch vehicle information");
         }
       } else if (data && data.role === 'parent') {
         const { data: childrenData, error: childrenError } = await supabase
@@ -151,12 +152,14 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           }));
         } else if (childrenError) {
           console.error("Error fetching children:", childrenError);
+          toast.error("Failed to fetch children information");
         }
       }
 
       return userProfile;
     } catch (error) {
       console.error("Error in fetchProfile:", error);
+      toast.error("Error loading your profile");
       return null;
     }
   };

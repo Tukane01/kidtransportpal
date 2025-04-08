@@ -8,13 +8,13 @@ import LoginForm from "@/components/LoginForm";
 import RegisterOptions from "@/components/RegisterOptions";
 import ParentRegisterForm from "@/components/ParentRegisterForm";
 import DriverRegisterForm from "@/components/DriverRegisterForm";
-import { useAuth } from "@/context/AuthContext";
+import { useSupabaseAuth } from "@/context/SupabaseAuthContext";
 import { useNavigate } from "react-router-dom";
 
 const AuthWrapper: React.FC = () => {
   const [activeTab, setActiveTab] = useState("login");
   const [registerType, setRegisterType] = useState<"select" | "parent" | "driver">("select");
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useSupabaseAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
