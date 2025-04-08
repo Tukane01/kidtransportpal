@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,7 +65,12 @@ const DriverProfile: React.FC = () => {
           return;
         }
         
-        imageUrl = `${supabase.storageUrl}/object/public/${data.bucket}/${data.path}`;
+        // Construct the public URL for the uploaded image
+        const { data: publicUrlData } = supabase.storage
+          .from('profile-images')
+          .getPublicUrl(`${currentUser?.id}/${newProfileImage.name}`);
+          
+        imageUrl = publicUrlData.publicUrl;
       }
       
       const updatedData = {

@@ -1,11 +1,11 @@
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { 
   Sidebar, 
   SidebarContent, 
-  SidebarMenu, 
   SidebarMenuItem, 
+  SidebarMenu, 
   SidebarMenuButton 
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
@@ -13,15 +13,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   LayoutDashboard, 
   Car, 
-  Users, 
+  Clock, 
   Wallet, 
-  LogOut 
+  LogOut,
+  Users
 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const ParentSidebar: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser, logout } = useAuth();
   const isMobile = useIsMobile();
   
@@ -57,31 +59,31 @@ const ParentSidebar: React.FC = () => {
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={() => navigate('/dashboard')} tooltip="Dashboard">
+              <SidebarMenuButton onClick={() => navigate('/dashboard')}>
                 <LayoutDashboard size={18} />
                 <span>Dashboard</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={() => navigate('/history')} tooltip="Ride History">
+              <SidebarMenuButton onClick={() => navigate('/history')}>
                 <Car size={18} />
                 <span>Ride History</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={() => navigate('/profile')} tooltip="Profile">
+              <SidebarMenuButton onClick={() => navigate('/profile')}>
                 <Users size={18} />
                 <span>Profile</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={() => navigate('/wallet')} tooltip="Wallet">
+              <SidebarMenuButton onClick={() => navigate('/wallet')}>
                 <Wallet size={18} />
                 <span>Wallet</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={handleLogout} tooltip="Logout">
+              <SidebarMenuButton onClick={handleLogout}>
                 <LogOut size={18} />
                 <span>Logout</span>
               </SidebarMenuButton>
