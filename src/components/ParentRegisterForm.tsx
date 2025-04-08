@@ -14,13 +14,22 @@ import ChildForm from "@/components/ChildForm";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+// Define a proper type for the child data
+interface ChildData {
+  name: string;
+  surname: string;
+  idNumber: string;
+  schoolName: string;
+  schoolAddress: string;
+}
+
 const ParentRegisterForm: React.FC = () => {
   const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [hasChild, setHasChild] = useState(false);
   const [showChildForm, setShowChildForm] = useState(false);
   const [childFormCompleted, setChildFormCompleted] = useState(false);
-  const [childData, setChildData] = useState(null);
+  const [childData, setChildData] = useState<ChildData | null>(null);
   
   const form = useForm<z.infer<typeof parentRegistrationSchema>>({
     resolver: zodResolver(parentRegistrationSchema),
@@ -103,7 +112,7 @@ const ParentRegisterForm: React.FC = () => {
     form.setValue("hasChild", checked);
   };
   
-  const handleChildFormComplete = (data) => {
+  const handleChildFormComplete = (data: ChildData) => {
     setChildData(data);
     setChildFormCompleted(true);
     setShowChildForm(false);
