@@ -14,22 +14,13 @@ import ChildForm from "@/components/ChildForm";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-// Define a proper type for the child data
-interface ChildData {
-  name: string;
-  surname: string;
-  idNumber: string;
-  schoolName: string;
-  schoolAddress: string;
-}
-
 const ParentRegisterForm: React.FC = () => {
   const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [hasChild, setHasChild] = useState(false);
   const [showChildForm, setShowChildForm] = useState(false);
   const [childFormCompleted, setChildFormCompleted] = useState(false);
-  const [childData, setChildData] = useState<ChildData | null>(null);
+  const [childData, setChildData] = useState(null);
   
   const form = useForm<z.infer<typeof parentRegistrationSchema>>({
     resolver: zodResolver(parentRegistrationSchema),
@@ -59,7 +50,6 @@ const ParentRegisterForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Register the user
       const success = await register({
         role: "parent",
         email: values.email,
@@ -89,7 +79,7 @@ const ParentRegisterForm: React.FC = () => {
             
           if (childError) {
             console.error("Error saving child data:", childError);
-            toast.error("Registration successful but failed to save child data: " + childError.message);
+            toast.error("Registration successful but failed to save child data");
           } else {
             toast.success("Registration successful with child data saved");
           }
@@ -101,7 +91,7 @@ const ParentRegisterForm: React.FC = () => {
       }
     } catch (error) {
       console.error("Registration error:", error);
-      toast.error("Registration failed: " + (error as Error).message);
+      toast.error("Registration failed");
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +102,7 @@ const ParentRegisterForm: React.FC = () => {
     form.setValue("hasChild", checked);
   };
   
-  const handleChildFormComplete = (data: ChildData) => {
+  const handleChildFormComplete = (data) => {
     setChildData(data);
     setChildFormCompleted(true);
     setShowChildForm(false);
@@ -131,11 +121,11 @@ const ParentRegisterForm: React.FC = () => {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-black">First Name</FormLabel>
+                  <FormLabel>First Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter your first name" {...field} disabled={isLoading} className="bg-white text-black" />
+                    <Input placeholder="Enter your first name" {...field} disabled={isLoading} />
                   </FormControl>
-                  <FormMessage className="text-red-500" />
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -145,11 +135,11 @@ const ParentRegisterForm: React.FC = () => {
               name="surname"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-black">Surname</FormLabel>
+                  <FormLabel>Surname</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter your surname" {...field} disabled={isLoading} className="bg-white text-black" />
+                    <Input placeholder="Enter your surname" {...field} disabled={isLoading} />
                   </FormControl>
-                  <FormMessage className="text-red-500" />
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -159,17 +149,16 @@ const ParentRegisterForm: React.FC = () => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-black">Email</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="your.email@gmail.com"
                       type="email"
                       {...field}
                       disabled={isLoading}
-                      className="bg-white text-black"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-500" />
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -180,17 +169,16 @@ const ParentRegisterForm: React.FC = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-black">Password</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="Create password" 
                         type="password" 
                         {...field} 
                         disabled={isLoading}
-                        className="bg-white text-black"
                       />
                     </FormControl>
-                    <FormMessage className="text-red-500" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -200,17 +188,16 @@ const ParentRegisterForm: React.FC = () => {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-black">Confirm Password</FormLabel>
+                    <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="Confirm password" 
                         type="password" 
                         {...field} 
                         disabled={isLoading}
-                        className="bg-white text-black"
                       />
                     </FormControl>
-                    <FormMessage className="text-red-500" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -221,16 +208,15 @@ const ParentRegisterForm: React.FC = () => {
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-black">Phone Number</FormLabel>
+                  <FormLabel>Phone Number</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="0821234567" 
                       {...field} 
                       disabled={isLoading}
-                      className="bg-white text-black"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-500" />
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -240,16 +226,15 @@ const ParentRegisterForm: React.FC = () => {
               name="idNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-black">ID Number</FormLabel>
+                  <FormLabel>ID Number</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="Enter your 13-digit ID number" 
                       {...field} 
                       disabled={isLoading}
-                      className="bg-white text-black"
                     />
                   </FormControl>
-                  <FormMessage className="text-red-500" />
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -258,10 +243,10 @@ const ParentRegisterForm: React.FC = () => {
               control={form.control}
               name="hasChild"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-white">
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-black text-base">Do you have a child?</FormLabel>
-                    <div className="text-sm text-gray-600">
+                    <FormLabel className="text-base">Do you have a child?</FormLabel>
+                    <div className="text-sm text-muted-foreground">
                       You must have at least one child to register
                     </div>
                   </div>
@@ -277,7 +262,7 @@ const ParentRegisterForm: React.FC = () => {
             />
             
             {!hasChild && (
-              <div className="text-red-500 text-sm flex items-center gap-2">
+              <div className="text-destructive text-sm flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />
                 <span>You must have at least one child to register</span>
               </div>

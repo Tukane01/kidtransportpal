@@ -1,263 +1,261 @@
-
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Clock, MapPin, School } from "lucide-react";
+import { 
+  Calendar, 
+  Clock, 
+  CreditCard, 
+  DollarSign, 
+  MapPin, 
+  Plus, 
+  School, 
+  User 
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
-interface Child {
-  id: string;
-  name: string;
-  surname: string;
-  schoolName: string;
-  schoolAddress: string;
-}
-
-interface Ride {
-  id: string;
-  driverName: string;
-  childName: string;
-  date: string;
-  time: string;
-  status: "scheduled" | "inProgress" | "completed" | "cancelled";
-  pickupLocation: string;
-  dropoffLocation: string;
-}
+// Create a WalletCard component to replace the missing Wallet reference
+const WalletCard = () => {
+  const { currentUser } = useAuth();
+  
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-medium">Wallet Balance</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center">
+          <DollarSign className="h-5 w-5 text-muted-foreground mr-2" />
+          <span className="text-2xl font-bold">
+            R {currentUser?.walletBalance.toFixed(2)}
+          </span>
+        </div>
+        <Button variant="outline" size="sm" className="mt-4 w-full">
+          <CreditCard className="mr-2 h-4 w-4" /> Top Up Balance
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
 
 const ParentHome: React.FC = () => {
   const { currentUser } = useAuth();
-  const [children, setChildren] = useState<Child[]>([]);
-  const [rides, setRides] = useState<Ride[]>([]);
-  const [loading, setLoading] = useState(true);
   
-  useEffect(() => {
-    const fetchUserData = async () => {
-      setLoading(true);
-      try {
-        if (currentUser?.id) {
-          // Fetch children data
-          const { data: childrenData, error: childrenError } = await supabase
-            .from('children')
-            .select('id, name, surname, school_name, school_address')
-            .eq('parent_id', currentUser.id);
-            
-          if (childrenError) {
-            console.error("Error fetching children:", childrenError);
-            toast.error("Failed to load children data");
-          } else if (childrenData) {
-            // Transform snake_case to camelCase
-            const formattedChildren = childrenData.map(child => ({
-              id: child.id,
-              name: child.name,
-              surname: child.surname,
-              schoolName: child.school_name,
-              schoolAddress: child.school_address
-            }));
-            setChildren(formattedChildren);
-          }
-          
-          // For now, we'll use mock ride data since we don't have a rides table yet
-          // This can be replaced with real data later
-          setRides([
-            {
-              id: "ride-1",
-              driverName: "Available Driver",
-              childName: childrenData?.[0]?.name || "Your Child",
-              date: new Date().toLocaleDateString(),
-              time: "07:30",
-              status: "scheduled",
-              pickupLocation: "Home Address",
-              dropoffLocation: childrenData?.[0]?.school_name || "School"
-            }
-          ]);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        toast.error("An error occurred while loading your data");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchUserData();
-  }, [currentUser?.id]);
+  // Mock data for upcoming rides
+  const upcomingRides = [
+    {
+      id: "ride-1",
+      driverName: "Sarah Driver",
+      childName: "Emma Parent",
+      date: "2023-06-15",
+      time: "07:30",
+      status: "scheduled",
+      pickupLocation: "123 Home Street",
+      dropoffLocation: "ABC Primary School"
+    },
+    {
+      id: "ride-2",
+      driverName: "John Driver",
+      childName: "Emma Parent",
+      date: "2023-06-15",
+      time: "14:30",
+      status: "scheduled",
+      pickupLocation: "ABC Primary School",
+      dropoffLocation: "123 Home Street"
+    }
+  ];
   
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-schoolride-primary"></div>
-      </div>
-    );
-  }
+  // Mock data for children
+  const children = [
+    {
+      id: "child-1",
+      name: "Emma",
+      surname: "Parent",
+      schoolName: "ABC Primary School",
+      grade: "Grade 3"
+    }
+  ];
   
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-black font-heading">Welcome, {currentUser?.name || "User"}!</h1>
+      <h1 className="text-2xl font-bold font-heading">Welcome, {currentUser?.name}!</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-white text-black">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium text-black">Upcoming Rides</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {rides.length > 0 ? (
-              <div className="space-y-4">
-                {rides.map((ride) => (
-                  <div key={ride.id} className="border rounded-md p-4 bg-gray-50">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-medium text-black">{ride.childName}</div>
-                        <div className="text-sm text-gray-600">with {ride.driverName}</div>
-                      </div>
-                      <Badge variant={ride.status === "scheduled" ? "outline" : "default"}>
-                        {ride.status === "scheduled" ? "Scheduled" : "In Progress"}
-                      </Badge>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 mt-4">
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 text-gray-500 mr-2" />
-                        <span className="text-sm text-black">{ride.date}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 text-gray-500 mr-2" />
-                        <span className="text-sm text-black">{ride.time}</span>
-                      </div>
-                    </div>
-                    
-                    <Separator className="my-3" />
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-start">
-                        <MapPin className="h-4 w-4 text-gray-500 mr-2 mt-0.5" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 space-y-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-medium">Upcoming Rides</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {upcomingRides.length > 0 ? (
+                <div className="space-y-4">
+                  {upcomingRides.map((ride) => (
+                    <div key={ride.id} className="border rounded-md p-4">
+                      <div className="flex justify-between items-start">
                         <div>
-                          <div className="text-xs text-gray-600">Pickup</div>
-                          <div className="text-sm text-black">{ride.pickupLocation}</div>
+                          <div className="font-medium">{ride.childName}</div>
+                          <div className="text-sm text-muted-foreground">with {ride.driverName}</div>
+                        </div>
+                        <Badge variant={ride.status === "scheduled" ? "outline" : "default"}>
+                          {ride.status === "scheduled" ? "Scheduled" : "In Progress"}
+                        </Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 mt-4">
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 text-muted-foreground mr-2" />
+                          <span className="text-sm">{ride.date}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Clock className="h-4 w-4 text-muted-foreground mr-2" />
+                          <span className="text-sm">{ride.time}</span>
                         </div>
                       </div>
-                      <div className="flex items-start">
-                        <MapPin className="h-4 w-4 text-gray-500 mr-2 mt-0.5" />
-                        <div>
-                          <div className="text-xs text-gray-600">Dropoff</div>
-                          <div className="text-sm text-black">{ride.dropoffLocation}</div>
+                      
+                      <Separator className="my-3" />
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-start">
+                          <MapPin className="h-4 w-4 text-muted-foreground mr-2 mt-0.5" />
+                          <div>
+                            <div className="text-xs text-muted-foreground">Pickup</div>
+                            <div className="text-sm">{ride.pickupLocation}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start">
+                          <MapPin className="h-4 w-4 text-muted-foreground mr-2 mt-0.5" />
+                          <div>
+                            <div className="text-xs text-muted-foreground">Dropoff</div>
+                            <div className="text-sm">{ride.dropoffLocation}</div>
+                          </div>
                         </div>
                       </div>
+                      
+                      <div className="mt-4">
+                        <Button variant="outline" size="sm" className="w-full">
+                          View Details
+                        </Button>
+                      </div>
                     </div>
-                    
-                    <div className="mt-4">
-                      <Button variant="outline" size="sm" className="w-full text-black border-gray-300">
-                        View Details
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-muted-foreground">No upcoming rides</p>
+                  <Button variant="outline" className="mt-2">
+                    <Plus className="mr-2 h-4 w-4" /> Schedule a Ride
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-lg font-medium">My Children</CardTitle>
+                <Button variant="ghost" size="sm">
+                  <Plus className="h-4 w-4 mr-1" /> Add Child
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {children.length > 0 ? (
+                <div className="space-y-4">
+                  {children.map((child) => (
+                    <div key={child.id} className="flex items-center justify-between border rounded-md p-4">
+                      <div className="flex items-center">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback>{child.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="ml-3">
+                          <div className="font-medium">
+                            {child.name} {child.surname}
+                          </div>
+                          <div className="text-sm text-muted-foreground flex items-center">
+                            <School className="h-3 w-3 mr-1" /> {child.schoolName} · {child.grade}
+                          </div>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm">
+                        View
                       </Button>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-gray-600">No upcoming rides</p>
-                <Button variant="outline" className="mt-2 text-black border-gray-300">
-                  Schedule a Ride
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <p className="text-muted-foreground">No children added yet</p>
+                  <Button variant="outline" className="mt-2">
+                    <Plus className="mr-2 h-4 w-4" /> Add Child
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
         
-        <Card className="bg-white">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium text-black">Your Children</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {children.length > 0 ? (
-              <div className="space-y-4">
-                {children.map((child) => (
-                  <div key={child.id} className="flex items-center justify-between border rounded-md p-4 bg-gray-50">
-                    <div className="flex items-center">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-schoolride-primary text-white">{child.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="ml-3">
-                        <div className="font-medium text-black">
-                          {child.name} {child.surname}
-                        </div>
-                        <div className="text-sm text-gray-600 flex items-center">
-                          <School className="h-3 w-3 mr-1" /> {child.schoolName}
-                        </div>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" className="text-black">
-                      View
-                    </Button>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-medium">My Profile</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={currentUser?.profileImage} alt={currentUser?.name} />
+                  <AvatarFallback className="text-xl">
+                    {currentUser?.name?.charAt(0)}{currentUser?.surname?.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="mt-4 text-center">
+                  <div className="font-medium text-lg">
+                    {currentUser?.name} {currentUser?.surname}
                   </div>
-                ))}
+                  <div className="text-sm text-muted-foreground">{currentUser?.email}</div>
+                </div>
               </div>
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-gray-600">No children found</p>
-                <Button variant="outline" className="mt-2 text-black border-gray-300">
-                  Add Child
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-white md:col-span-2">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-medium text-black">User Dashboard</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col md:flex-row gap-4 items-center md:items-start">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={currentUser?.profileImage} alt={currentUser?.name} />
-                <AvatarFallback className="text-xl bg-schoolride-primary text-white">
-                  {currentUser?.name?.charAt(0) || 'U'}{currentUser?.surname?.charAt(0) || 'S'}
-                </AvatarFallback>
-              </Avatar>
               
-              <div className="space-y-3 text-center md:text-left">
-                <div>
-                  <h3 className="text-xl font-bold text-black">{currentUser?.name} {currentUser?.surname}</h3>
-                  <p className="text-gray-600">{currentUser?.email}</p>
+              <Separator className="my-4" />
+              
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <User className="h-4 w-4 text-muted-foreground mr-2" />
+                  <div className="text-sm">{currentUser?.phone || "No phone number"}</div>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                  <div className="flex items-center justify-center md:justify-start">
-                    <span className="font-medium text-black">Phone:</span>
-                    <span className="ml-2 text-gray-700">{currentUser?.phone || "Not set"}</span>
-                  </div>
-                  <div className="flex items-center justify-center md:justify-start">
-                    <span className="font-medium text-black">ID Number:</span>
-                    <span className="ml-2 text-gray-700">{currentUser?.idNumber || "Not set"}</span>
-                  </div>
-                  <div className="flex items-center justify-center md:justify-start">
-                    <span className="font-medium text-black">Role:</span>
-                    <span className="ml-2 text-gray-700">{currentUser?.role || "Parent"}</span>
-                  </div>
-                  <div className="flex items-center justify-center md:justify-start">
-                    <span className="font-medium text-black">Wallet Balance:</span>
-                    <span className="ml-2 text-gray-700">R {currentUser?.walletBalance?.toFixed(2) || "0.00"}</span>
-                  </div>
+                <div className="flex items-center">
+                  <MapPin className="h-4 w-4 text-muted-foreground mr-2" />
+                  <div className="text-sm">{"Home address not set"}</div>
                 </div>
               </div>
-            </div>
-            
-            <Separator className="bg-gray-200" />
-            
-            <Button 
-              variant="outline" 
-              className="w-full md:w-auto text-black border-gray-300"
-              onClick={() => toast.success("Redirecting to profile page...")}
-            >
-              Edit Profile
-            </Button>
-          </CardContent>
-        </Card>
+              
+              <Button variant="outline" size="sm" className="w-full mt-4">
+                Edit Profile
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <WalletCard />
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-medium">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button variant="outline" size="sm" className="w-full justify-start">
+                <Plus className="mr-2 h-4 w-4" /> Schedule New Ride
+              </Button>
+              <Button variant="outline" size="sm" className="w-full justify-start">
+                <MapPin className="mr-2 h-4 w-4" /> Update Home Address
+              </Button>
+              <Button variant="outline" size="sm" className="w-full justify-start">
+                <School className="mr-2 h-4 w-4" /> Update School Details
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
