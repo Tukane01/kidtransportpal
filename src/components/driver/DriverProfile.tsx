@@ -50,7 +50,7 @@ const DriverProfile: React.FC = () => {
       let imageUrl = profileImage;
       
       if (newProfileImage) {
-        // Upload the new image to Supabase storage
+        // FIX: Correctly upload the new image to Supabase storage
         const { data, error } = await supabase.storage
           .from('profile-images')
           .upload(`${currentUser?.id}/${newProfileImage.name}`, newProfileImage, {
@@ -65,7 +65,7 @@ const DriverProfile: React.FC = () => {
           return;
         }
         
-        // Construct the public URL for the uploaded image
+        // FIX: Correctly get the public URL for the uploaded image
         const { data: publicUrlData } = supabase.storage
           .from('profile-images')
           .getPublicUrl(`${currentUser?.id}/${newProfileImage.name}`);

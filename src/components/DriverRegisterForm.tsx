@@ -122,6 +122,7 @@ const DriverRegisterForm: React.FC = () => {
     form.setValue("hasCar", checked);
   };
   
+  // FIX: Update handleCarFormComplete to accept CarData parameter
   const handleCarFormComplete = (data: CarData) => {
     setCarData(data);
     setCarFormCompleted(true);
