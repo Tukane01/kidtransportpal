@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,7 +69,9 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .single();
       
       if (error) {
+        // Check if it's a "no rows returned" error
         if (error.code === 'PGRST116') {
+          // Create a default profile for this user
           const defaultProfile = {
             id: userId,
             name: '',
@@ -86,6 +89,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             return null;
           }
           
+          // Return the default profile we just created
           return {
             id: userId,
             name: '',
@@ -110,6 +114,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         role: data.role as UserRole || 'parent',
       };
 
+      // Fetch role-specific data
       if (data && data.role === 'driver') {
         const { data: carsData, error: carsError } = await supabase
           .from('cars')
@@ -314,7 +319,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         return { error };
       }
 
-      await refreshProfile(false);
+      await refreshProfile(false); // Don't show toast on auto-refresh
       return { error: null };
     } catch (error) {
       console.error("Error in updateProfile:", error);

@@ -113,7 +113,7 @@ const DriverRegisterForm: React.FC = () => {
     form.setValue("hasCar", checked);
   };
   
-  const handleCarFormComplete = (data: any) => {
+  const handleCarFormComplete = (data) => {
     setCarData(data);
     setCarFormCompleted(true);
     setShowCarForm(false);

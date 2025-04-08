@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -49,6 +50,7 @@ const ParentRegisterForm: React.FC = () => {
     setIsLoading(true);
     
     try {
+      // Register the user
       const success = await register({
         role: "parent",
         email: values.email,
@@ -60,9 +62,11 @@ const ParentRegisterForm: React.FC = () => {
       });
       
       if (success && childData) {
+        // Get the newly created user
         const { data: authData } = await supabase.auth.getUser();
         
         if (authData?.user) {
+          // Insert the child data with the parent's user ID
           const { error: childError } = await supabase
             .from('children')
             .insert({
@@ -99,7 +103,7 @@ const ParentRegisterForm: React.FC = () => {
     form.setValue("hasChild", checked);
   };
   
-  const handleChildFormComplete = (data: any) => {
+  const handleChildFormComplete = (data) => {
     setChildData(data);
     setChildFormCompleted(true);
     setShowChildForm(false);
