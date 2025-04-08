@@ -1,24 +1,29 @@
+
 import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Sidebar, SidebarItem } from "@/components/ui/sidebar";
+import { useNavigate } from "react-router-dom";
+import { 
+  Sidebar, 
+  SidebarContent, 
+  SidebarMenu, 
+  SidebarMenuItem, 
+  SidebarMenuButton 
+} from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   LayoutDashboard, 
   Car, 
-  Clock, 
+  Users, 
   Wallet, 
-  LogOut,
-  Users
+  LogOut 
 } from "lucide-react";
 import { toast } from "sonner";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ParentSidebar: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { currentUser, logout } = useAuth();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   
   const handleLogout = async () => {
     try {
@@ -49,11 +54,40 @@ const ParentSidebar: React.FC = () => {
           <h2 className="mt-2 font-semibold text-xl">{currentUser?.name} {currentUser?.surname}</h2>
           <p className="text-muted-foreground text-sm mt-1">{currentUser?.email || 'No email'}</p>
         </div>
-        <SidebarItem icon={<LayoutDashboard size={18} />} label="Dashboard" href="/dashboard" />
-        <SidebarItem icon={<Car size={18} />} label="Ride History" href="/history" />
-        <SidebarItem icon={<Users size={18} />} label="Profile" href="/profile" />
-        <SidebarItem icon={<Wallet size={18} />} label="Wallet" href="/wallet" />
-        <SidebarItem icon={<LogOut size={18} />} label="Logout" onClick={handleLogout} />
+        <SidebarContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => navigate('/dashboard')} tooltip="Dashboard">
+                <LayoutDashboard size={18} />
+                <span>Dashboard</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => navigate('/history')} tooltip="Ride History">
+                <Car size={18} />
+                <span>Ride History</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => navigate('/profile')} tooltip="Profile">
+                <Users size={18} />
+                <span>Profile</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => navigate('/wallet')} tooltip="Wallet">
+                <Wallet size={18} />
+                <span>Wallet</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={handleLogout} tooltip="Logout">
+                <LogOut size={18} />
+                <span>Logout</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarContent>
       </div>
     </Sidebar>
   );
