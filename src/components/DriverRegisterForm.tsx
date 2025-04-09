@@ -9,19 +9,10 @@ import { driverRegistrationSchema } from "@/utils/validation";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Switch } from "@/components/ui/switch";
-import CarForm from "@/components/CarForm";
+import CarForm, { CarFormData } from "@/components/CarForm";
 import { toast } from "sonner";
 import { checkAgeFromIdNumber } from "@/utils/validation";
 import { supabase } from "@/integrations/supabase/client";
-
-interface CarFormData {
-  make: string;
-  model: string;
-  registrationNumber: string;
-  color: string;
-  vinNumber: string;
-  ownerIdNumber: string;
-}
 
 const DriverRegisterForm: React.FC = () => {
   const { register } = useAuth();

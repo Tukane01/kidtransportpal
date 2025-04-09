@@ -9,17 +9,9 @@ import { parentRegistrationSchema } from "@/utils/validation";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Switch } from "@/components/ui/switch";
-import ChildForm from "@/components/ChildForm";
+import ChildForm, { ChildFormData } from "@/components/ChildForm";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-
-interface ChildFormData {
-  name: string;
-  surname: string;
-  idNumber: string;
-  schoolName: string;
-  schoolAddress: string;
-}
 
 const ParentRegisterForm: React.FC = () => {
   const { register } = useAuth();

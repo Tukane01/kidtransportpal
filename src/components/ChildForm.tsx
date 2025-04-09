@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -11,8 +10,7 @@ import { Loader2 } from "lucide-react";
 import { useRide } from "@/context/RideContext";
 
 // Define the Child interface
-export interface Child {
-  id: string;
+export interface ChildFormData {
   name: string;
   surname: string;
   idNumber: string;
@@ -21,7 +19,7 @@ export interface Child {
 }
 
 interface ChildFormProps {
-  onComplete: () => void;
+  onComplete: (data: ChildFormData) => void;
   onCancel: () => void;
 }
 
@@ -45,7 +43,7 @@ const ChildForm: React.FC<ChildFormProps> = ({ onComplete, onCancel }) => {
     
     try {
       // Ensure all required fields are present
-      const childData = {
+      const childData: ChildFormData = {
         name: values.name,
         surname: values.surname,
         idNumber: values.idNumber,
@@ -54,7 +52,7 @@ const ChildForm: React.FC<ChildFormProps> = ({ onComplete, onCancel }) => {
       };
       
       await addChild(childData);
-      onComplete();
+      onComplete(childData);
     } catch (error) {
       console.error("Error adding child:", error);
     } finally {
