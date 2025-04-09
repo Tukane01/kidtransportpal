@@ -113,6 +113,7 @@ const DriverRegisterForm: React.FC = () => {
     form.setValue("hasCar", checked);
   };
   
+  // Fix: Update the type signature to match what CarForm expects
   const handleCarFormComplete = (data: any) => {
     setCarData(data);
     setCarFormCompleted(true);

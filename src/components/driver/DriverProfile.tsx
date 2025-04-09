@@ -1,3 +1,4 @@
+
 // src/components/driver/DriverProfile.tsx
 import React, { useState, useEffect } from 'react';
 import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
@@ -7,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import CarForm from '@/components/CarForm';
+import { supabase } from '@/integrations/supabase/client'; // Add missing import
 
 const DriverProfile: React.FC = () => {
   const { profile, updateProfile, refreshProfile } = useSupabaseAuth();

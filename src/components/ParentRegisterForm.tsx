@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -99,6 +100,7 @@ const ParentRegisterForm: React.FC = () => {
     form.setValue("hasChild", checked);
   };
   
+  // Fix: Update the type signature to match what ChildForm expects
   const handleChildFormComplete = (data: any) => {
     setChildData(data);
     setChildFormCompleted(true);

@@ -44,7 +44,10 @@ const ParentSidebar: React.FC = () => {
             <div className="font-medium text-gray-800 text-base">
               {profile?.name || "User"} {profile?.surname || ""}
             </div>
-            <div className="text-xs text-gray-600 font-medium">{profile?.email || "No email"}</div>
+            <div className="text-xs text-gray-600 font-medium">
+              {/* Get email from User object in auth context if needed */}
+              {profile?.id ? profile.id.substring(0, 8) + "..." : "No email"}
+            </div>
           </div>
         </div>
       </div>
