@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -14,13 +13,21 @@ import ChildForm from "@/components/ChildForm";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+interface ChildFormData {
+  name: string;
+  surname: string;
+  idNumber: string;
+  schoolName: string;
+  schoolAddress: string;
+}
+
 const ParentRegisterForm: React.FC = () => {
   const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [hasChild, setHasChild] = useState(false);
   const [showChildForm, setShowChildForm] = useState(false);
   const [childFormCompleted, setChildFormCompleted] = useState(false);
-  const [childData, setChildData] = useState(null);
+  const [childData, setChildData] = useState<ChildFormData | null>(null);
   
   const form = useForm<z.infer<typeof parentRegistrationSchema>>({
     resolver: zodResolver(parentRegistrationSchema),
@@ -100,8 +107,7 @@ const ParentRegisterForm: React.FC = () => {
     form.setValue("hasChild", checked);
   };
   
-  // Fix: Update the type signature to match what ChildForm expects
-  const handleChildFormComplete = (data: any) => {
+  const handleChildFormComplete = (data: ChildFormData) => {
     setChildData(data);
     setChildFormCompleted(true);
     setShowChildForm(false);

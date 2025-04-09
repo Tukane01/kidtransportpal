@@ -70,7 +70,8 @@ const DriverProfile: React.FC = () => {
         console.error('Error uploading image:', error);
         toast.error('Failed to upload image.');
       } else {
-        const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${data.Key}`;
+        // Fix: Correct property access for storage response data
+        const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${data.path}`;
         setProfileImage(imageUrl);
         toast.success('Image uploaded successfully!');
       }

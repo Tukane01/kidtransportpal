@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -15,13 +14,22 @@ import { toast } from "sonner";
 import { checkAgeFromIdNumber } from "@/utils/validation";
 import { supabase } from "@/integrations/supabase/client";
 
+interface CarFormData {
+  make: string;
+  model: string;
+  registrationNumber: string;
+  color: string;
+  vinNumber: string;
+  ownerIdNumber: string;
+}
+
 const DriverRegisterForm: React.FC = () => {
   const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [hasCar, setHasCar] = useState(false);
   const [showCarForm, setShowCarForm] = useState(false);
   const [carFormCompleted, setCarFormCompleted] = useState(false);
-  const [carData, setCarData] = useState(null);
+  const [carData, setCarData] = useState<CarFormData | null>(null);
   
   const form = useForm<z.infer<typeof driverRegistrationSchema>>({
     resolver: zodResolver(driverRegistrationSchema),
@@ -38,20 +46,17 @@ const DriverRegisterForm: React.FC = () => {
   });
   
   const onSubmit = async (values: z.infer<typeof driverRegistrationSchema>) => {
-    // Check driver's age from ID number (must be 25-65)
     const idValidation = checkAgeFromIdNumber(values.idNumber);
     if (!idValidation.isValid) {
       toast.error(`Drivers must be between 25-65 years old. You are ${idValidation.age}`);
       return;
     }
     
-    // If driver has a car but hasn't completed car form, show car form
     if (hasCar && !carFormCompleted) {
       setShowCarForm(true);
       return;
     }
     
-    // If driver doesn't have a car, reject registration
     if (!hasCar) {
       toast.error("You must have a car to register as a driver");
       return;
@@ -71,11 +76,9 @@ const DriverRegisterForm: React.FC = () => {
       });
       
       if (success && carData) {
-        // Get the newly created user
         const { data: authData } = await supabase.auth.getUser();
         
         if (authData?.user) {
-          // Insert the car data with the driver's user ID
           const { error: carError } = await supabase
             .from('cars')
             .insert({
@@ -113,8 +116,7 @@ const DriverRegisterForm: React.FC = () => {
     form.setValue("hasCar", checked);
   };
   
-  // Fix: Update the type signature to match what CarForm expects
-  const handleCarFormComplete = (data: any) => {
+  const handleCarFormComplete = (data: CarFormData) => {
     setCarData(data);
     setCarFormCompleted(true);
     setShowCarForm(false);
