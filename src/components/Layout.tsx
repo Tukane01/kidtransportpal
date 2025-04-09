@@ -24,7 +24,7 @@ const Layout: React.FC = () => {
   
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen w-full flex items-center justify-center bg-white">
         <Loader2 className="h-8 w-8 animate-spin text-schoolride-primary" />
         <span className="ml-2 text-gray-800 font-medium">Loading...</span>
       </div>

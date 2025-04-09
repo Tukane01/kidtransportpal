@@ -29,13 +29,13 @@ const ParentDashboard: React.FC = () => {
   
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex flex-col md:flex-row bg-white text-black">
+      <div className="min-h-screen flex flex-col md:flex-row bg-white text-black w-full">
         <ParentSidebar />
         
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden w-full">
           <ParentHeader />
           
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6 text-black">
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6 text-black w-full">
             {renderContent()}
           </main>
         </div>
