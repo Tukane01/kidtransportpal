@@ -12,18 +12,8 @@ import { useRide } from "@/context/RideContext";
 import { toast } from "sonner";
 import { Car } from "@/context/AuthContext";
 
-// Define the car data interface
-export interface CarData {
-  make: string;
-  model: string;
-  registrationNumber: string;
-  color: string;
-  vinNumber: string;
-  ownerIdNumber: string;
-}
-
 interface CarFormProps {
-  onComplete: (data: CarData) => void; // Updated to match how it's called
+  onComplete: () => void;
   onCancel: () => void;
   driverIdNumber: string;
 }
@@ -55,7 +45,7 @@ const CarForm: React.FC<CarFormProps> = ({ onComplete, onCancel, driverIdNumber 
       }
       
       // Ensure all required fields are present
-      const carData: CarData = {
+      const carData: Omit<Car, "id"> = {
         make: values.make,
         model: values.model,
         registrationNumber: values.registrationNumber,
@@ -65,7 +55,7 @@ const CarForm: React.FC<CarFormProps> = ({ onComplete, onCancel, driverIdNumber 
       };
       
       await addCar(carData);
-      onComplete(carData); // Pass the car data when calling onComplete
+      onComplete();
     } catch (error) {
       console.error("Error adding car:", error);
     } finally {

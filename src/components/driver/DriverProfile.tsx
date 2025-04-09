@@ -1,247 +1,209 @@
-
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/context/AuthContext";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2, LucideEdit, UserRound } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+// src/components/driver/DriverProfile.tsx
+import React, { useState, useEffect } from 'react';
+import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import CarForm from '@/components/CarForm';
 
 const DriverProfile: React.FC = () => {
-  const { currentUser, updateUserProfile, deleteUserProfile, refreshUserProfile } = useAuth();
+  const { profile, updateProfile, refreshProfile } = useSupabaseAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(currentUser?.name || "");
-  const [surname, setSurname] = useState(currentUser?.surname || "");
-  const [phone, setPhone] = useState(currentUser?.phone || "");
-  const [profileImage, setProfileImage] = useState(currentUser?.profileImage || "");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [newProfileImage, setNewProfileImage] = useState<File | null>(null);
-  
+  const [name, setName] = useState('');
+  const [surname, setSurname] = useState('');
+  const [phone, setPhone] = useState('');
+  const [idNumber, setIdNumber] = useState('');
+  const [profileImage, setProfileImage] = useState('');
+  const [showCarForm, setShowCarForm] = useState(false);
+
   useEffect(() => {
-    if (currentUser) {
-      setName(currentUser.name || "");
-      setSurname(currentUser.surname || "");
-      setPhone(currentUser.phone || "");
-      setProfileImage(currentUser.profileImage || "");
+    if (profile) {
+      setName(profile.name || '');
+      setSurname(profile.surname || '');
+      setPhone(profile.phone || '');
+      setIdNumber(profile.idNumber || '');
+      setProfileImage(profile.profileImage || '');
     }
-  }, [currentUser]);
-  
-  const handleEditClick = () => {
-    setIsEditing(true);
+  }, [profile]);
+
+  const handleSaveProfile = async () => {
+    const userData = {
+      name,
+      surname,
+      phone,
+      idNumber,
+      profileImage,
+    };
+
+    const { error } = await updateProfile(userData);
+    if (error) {
+      toast.error('Failed to update profile');
+    } else {
+      toast.success('Profile updated successfully!');
+      setIsEditing(false);
+      await refreshProfile();
+    }
   };
-  
-  const handleCancelClick = () => {
-    setIsEditing(false);
-    setName(currentUser?.name || "");
-    setSurname(currentUser?.surname || "");
-    setPhone(currentUser?.phone || "");
-    setProfileImage(currentUser?.profileImage || "");
-    setNewProfileImage(null);
-  };
-  
-  const handleSaveClick = async () => {
-    setIsLoading(true);
-    
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
     try {
-      let imageUrl = profileImage;
-      
-      if (newProfileImage) {
-        // FIX: Correctly upload the new image to Supabase storage
-        const { data, error } = await supabase.storage
-          .from('profile-images')
-          .upload(`${currentUser?.id}/${newProfileImage.name}`, newProfileImage, {
-            cacheControl: '3600',
-            upsert: false
-          });
-          
-        if (error) {
-          console.error("Error uploading image:", error);
-          toast.error("Failed to upload new profile image");
-          setIsLoading(false);
-          return;
-        }
-        
-        // FIX: Correctly get the public URL for the uploaded image
-        const { data: publicUrlData } = supabase.storage
-          .from('profile-images')
-          .getPublicUrl(`${currentUser?.id}/${newProfileImage.name}`);
-          
-        imageUrl = publicUrlData.publicUrl;
-      }
-      
-      const updatedData = {
-        name,
-        surname,
-        phone,
-        profileImage: imageUrl
-      };
-      
-      const success = await updateUserProfile(updatedData);
-      
-      if (success) {
-        toast.success("Profile updated successfully!");
-        setIsEditing(false);
-        await refreshUserProfile();
+      const fileName = `profile-image-${profile?.id}-${Date.now()}.${file.name.split('.').pop()}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('Error uploading image:', error);
+        toast.error('Failed to upload image.');
       } else {
-        toast.error("Failed to update profile");
+        const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${data.Key}`;
+        setProfileImage(imageUrl);
+        toast.success('Image uploaded successfully!');
       }
     } catch (error) {
-      console.error("Update profile error:", error);
-      toast.error("Failed to update profile");
-    } finally {
-      setIsLoading(false);
+      console.error('Unexpected error uploading image:', error);
+      toast.error('Unexpected error during image upload.');
     }
   };
-  
-  const handleDeleteProfileImage = async () => {
-    setIsDeleting(true);
-    
-    try {
-      const success = await deleteUserProfile();
-      
-      if (success) {
-        toast.success("Profile image removed successfully!");
-        setProfileImage("");
-        await refreshUserProfile();
-      } else {
-        toast.error("Failed to remove profile image");
-      }
-    } catch (error) {
-      console.error("Error deleting profile image:", error);
-      toast.error("Failed to remove profile image");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-  
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setNewProfileImage(file);
-      
-      // Optionally, display a local preview of the image
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-  
-  const getInitials = () => {
-    if (!currentUser) return "U";
-    const firstInitial = currentUser.name?.[0] || "";
-    const lastInitial = currentUser.surname?.[0] || "";
-    return `${firstInitial}${lastInitial}`;
-  };
-  
+
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold">Driver Profile</CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-6">
-        <div className="flex items-center space-x-4">
-          <Avatar className="h-20 w-20">
-            {profileImage ? (
-              <AvatarImage src={profileImage} alt="Profile Image" />
-            ) : (
-              <AvatarFallback className="bg-secondary text-secondary-foreground">
-                <UserRound className="h-8 w-8" />
-              </AvatarFallback>
-            )}
-          </Avatar>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-semibold mb-4">Driver Profile</h1>
+
+      {isEditing ? (
+        <div className="space-y-4">
           <div>
-            {isEditing ? (
-              <>
-                <Input type="file" id="profile-image-input" accept="image/*" onChange={handleImageChange} className="hidden" />
-                <Label htmlFor="profile-image-input" className="bg-blue-500 text-white py-2 px-4 rounded-md cursor-pointer hover:bg-blue-600">
-                  {newProfileImage ? "Change Image" : "Upload Image"}
-                </Label>
-                {profileImage && (
-                  <Button variant="destructive" size="sm" onClick={handleDeleteProfileImage} disabled={isDeleting} className="ml-2">
-                    {isDeleting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Deleting...
-                      </>
-                    ) : (
-                      "Remove"
-                    )}
-                  </Button>
-                )}
-              </>
-            ) : (
-              <>
-                <h2 className="text-lg font-semibold">{name} {surname}</h2>
-                <p className="text-muted-foreground">{phone}</p>
-              </>
-            )}
+            <Label htmlFor="name">Name</Label>
+            <Input
+              type="text"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
           </div>
+          <div>
+            <Label htmlFor="surname">Surname</Label>
+            <Input
+              type="text"
+              id="surname"
+              value={surname}
+              onChange={(e) => setSurname(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="phone">Phone</Label>
+            <Input
+              type="text"
+              id="phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="idNumber">ID Number</Label>
+            <Input
+              type="text"
+              id="idNumber"
+              value={idNumber}
+              onChange={(e) => setIdNumber(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="profileImage">Profile Image URL</Label>
+            <Input
+              type="text"
+              id="profileImage"
+              value={profileImage}
+              onChange={(e) => setProfileImage(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="imageUpload">Upload New Image</Label>
+            <Input
+              type="file"
+              id="imageUpload"
+              accept="image/*"
+              onChange={handleImageUpload}
+            />
+          </div>
+          <Button onClick={handleSaveProfile} className="bg-green-500 text-white">
+            Save Profile
+          </Button>
+          <Button onClick={() => setIsEditing(false)} className="bg-gray-500 text-white">
+            Cancel
+          </Button>
         </div>
-        
-        {isEditing ? (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">First Name</Label>
-                <Input
-                  type="text"
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-              <div>
-                <Label htmlFor="surname">Surname</Label>
-                <Input
-                  type="text"
-                  id="surname"
-                  value={surname}
-                  onChange={(e) => setSurname(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
+      ) : (
+        <div className="space-y-4">
+          {profileImage && (
             <div>
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                type="tel"
-                id="phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                disabled={isLoading}
-              />
+              <img src={profileImage} alt="Profile" className="w-32 h-32 rounded-full" />
             </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="ghost" onClick={handleCancelClick} disabled={isLoading}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveClick} disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save"
-                )}
-              </Button>
-            </div>
-          </>
-        ) : (
-          <Button onClick={handleEditClick} className="w-full">
-            <LucideEdit className="mr-2 h-4 w-4" />
+          )}
+          <div>
+            <Label>Name</Label>
+            <div className="font-semibold">{name}</div>
+          </div>
+          <div>
+            <Label>Surname</Label>
+            <div className="font-semibold">{surname}</div>
+          </div>
+          <div>
+            <Label>Phone</Label>
+            <div className="font-semibold">{phone}</div>
+          </div>
+          <div>
+            <Label>ID Number</Label>
+            <div className="font-semibold">{idNumber}</div>
+          </div>
+          <Button onClick={() => setIsEditing(true)} className="bg-blue-500 text-white">
             Edit Profile
           </Button>
-        )}
-      </CardContent>
-    </Card>
+          <Button onClick={() => setShowCarForm(true)} className="bg-blue-500 text-white">
+            Update Car Details
+          </Button>
+          {profile?.cars && profile.cars.length > 0 ? (
+            <div>
+              <h2 className="text-xl font-semibold mt-4">Registered Vehicles</h2>
+              {profile.cars.map((car) => (
+                <div key={car.id} className="border p-2 rounded-md mt-2">
+                  <p><strong>Make:</strong> {car.make}</p>
+                  <p><strong>Model:</strong> {car.model}</p>
+                  <p><strong>Registration Number:</strong> {car.registrationNumber}</p>
+                  <p><strong>Color:</strong> {car.color}</p>
+                  <p><strong>VIN Number:</strong> {car.vinNumber}</p>
+                  <p><strong>Owner ID Number:</strong> {car.ownerIdNumber}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>No vehicles registered.</p>
+          )}
+        </div>
+      )}
+      {showCarForm && (
+        <CarForm 
+          onComplete={() => {
+            setShowCarForm(false);
+            refreshProfile();
+          }} 
+          onCancel={() => setShowCarForm(false)}
+          driverIdNumber={profile?.idNumber || ''}
+        />
+      )}
+    </div>
   );
 };
 

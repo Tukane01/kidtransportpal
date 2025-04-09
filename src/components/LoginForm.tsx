@@ -29,19 +29,15 @@ const LoginForm: React.FC = () => {
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
-    setLoginError("");
     
     try {
       const success = await login(values.email, values.password);
       
       if (success) {
         navigate("/dashboard");
-      } else {
-        setLoginError("Invalid email or password");
       }
     } catch (error) {
       console.error("Login error:", error);
-      setLoginError("An error occurred during login");
     } finally {
       setIsLoading(false);
     }
@@ -52,11 +48,10 @@ const LoginForm: React.FC = () => {
     setLoginError("");
     
     try {
+      // Now using the proper loginWithGoogle function
       const success = await loginWithGoogle();
       if (success) {
         navigate("/dashboard");
-      } else {
-        setLoginError("Google sign-in failed");
       }
     } catch (error) {
       setLoginError("An error occurred during Google sign-in");

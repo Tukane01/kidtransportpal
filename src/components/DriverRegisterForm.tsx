@@ -15,22 +15,13 @@ import { toast } from "sonner";
 import { checkAgeFromIdNumber } from "@/utils/validation";
 import { supabase } from "@/integrations/supabase/client";
 
-// Define a proper type for the car data
-interface CarData {
-  make: string;
-  model: string;
-  registrationNumber: string;
-  color: string;
-  vinNumber: string;
-}
-
 const DriverRegisterForm: React.FC = () => {
   const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [hasCar, setHasCar] = useState(false);
   const [showCarForm, setShowCarForm] = useState(false);
   const [carFormCompleted, setCarFormCompleted] = useState(false);
-  const [carData, setCarData] = useState<CarData | null>(null);
+  const [carData, setCarData] = useState(null);
   
   const form = useForm<z.infer<typeof driverRegistrationSchema>>({
     resolver: zodResolver(driverRegistrationSchema),
@@ -122,7 +113,7 @@ const DriverRegisterForm: React.FC = () => {
     form.setValue("hasCar", checked);
   };
   
-  const handleCarFormComplete = (data: CarData) => {
+  const handleCarFormComplete = (data: any) => {
     setCarData(data);
     setCarFormCompleted(true);
     setShowCarForm(false);

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -14,22 +13,13 @@ import ChildForm from "@/components/ChildForm";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-// Define a proper type for the child data
-interface ChildData {
-  name: string;
-  surname: string;
-  idNumber: string;
-  schoolName: string;
-  schoolAddress: string;
-}
-
 const ParentRegisterForm: React.FC = () => {
   const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [hasChild, setHasChild] = useState(false);
   const [showChildForm, setShowChildForm] = useState(false);
   const [childFormCompleted, setChildFormCompleted] = useState(false);
-  const [childData, setChildData] = useState<ChildData | null>(null);
+  const [childData, setChildData] = useState(null);
   
   const form = useForm<z.infer<typeof parentRegistrationSchema>>({
     resolver: zodResolver(parentRegistrationSchema),
@@ -59,7 +49,6 @@ const ParentRegisterForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Register the user
       const success = await register({
         role: "parent",
         email: values.email,
@@ -71,11 +60,9 @@ const ParentRegisterForm: React.FC = () => {
       });
       
       if (success && childData) {
-        // Get the newly created user
         const { data: authData } = await supabase.auth.getUser();
         
         if (authData?.user) {
-          // Insert the child data with the parent's user ID
           const { error: childError } = await supabase
             .from('children')
             .insert({
@@ -112,7 +99,7 @@ const ParentRegisterForm: React.FC = () => {
     form.setValue("hasChild", checked);
   };
   
-  const handleChildFormComplete = (data: ChildData) => {
+  const handleChildFormComplete = (data: any) => {
     setChildData(data);
     setChildFormCompleted(true);
     setShowChildForm(false);
