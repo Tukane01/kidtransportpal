@@ -7,6 +7,7 @@ import ParentRideHistory from "./ParentRideHistory";
 import ParentProfile from "./ParentProfile";
 import ParentWallet from "./ParentWallet";
 import { useUI } from "@/context/UIContext";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 const ParentDashboard: React.FC = () => {
   const { activeTab } = useUI();
@@ -27,17 +28,19 @@ const ParentDashboard: React.FC = () => {
   };
   
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-white text-black">
-      <ParentSidebar />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <ParentHeader />
+    <SidebarProvider>
+      <div className="min-h-screen flex flex-col md:flex-row bg-white text-black">
+        <ParentSidebar />
         
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6 text-black">
-          {renderContent()}
-        </main>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <ParentHeader />
+          
+          <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6 text-black">
+            {renderContent()}
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
