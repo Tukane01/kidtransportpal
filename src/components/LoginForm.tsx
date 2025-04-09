@@ -52,7 +52,6 @@ const LoginForm: React.FC = () => {
     setLoginError("");
     
     try {
-      // Now using the proper loginWithGoogle function
       const success = await loginWithGoogle();
       if (success) {
         navigate("/dashboard");

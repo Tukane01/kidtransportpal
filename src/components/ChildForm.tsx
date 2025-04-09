@@ -21,7 +21,13 @@ export interface Child {
 }
 
 interface ChildFormProps {
-  onComplete: () => void;
+  onComplete: (data: {
+    name: string;
+    surname: string;
+    idNumber: string;
+    schoolName: string;
+    schoolAddress: string;
+  }) => void;
   onCancel: () => void;
 }
 
@@ -54,7 +60,7 @@ const ChildForm: React.FC<ChildFormProps> = ({ onComplete, onCancel }) => {
       };
       
       await addChild(childData);
-      onComplete();
+      onComplete(childData);
     } catch (error) {
       console.error("Error adding child:", error);
     } finally {

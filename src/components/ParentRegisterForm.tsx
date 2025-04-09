@@ -112,7 +112,6 @@ const ParentRegisterForm: React.FC = () => {
     form.setValue("hasChild", checked);
   };
   
-  // FIX: Update handleChildFormComplete to accept ChildData parameter
   const handleChildFormComplete = (data: ChildData) => {
     setChildData(data);
     setChildFormCompleted(true);
