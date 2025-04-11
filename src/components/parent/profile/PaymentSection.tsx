@@ -21,6 +21,7 @@ const paymentSchema = z.object({
   cvv: z.string().min(3, "CVV must be at least 3 digits").max(4, "CVV is too long")
 });
 
+// Define the PaymentMethod type explicitly to match what we expect from the database
 interface PaymentMethod {
   id: string;
   user_id: string;
@@ -57,26 +58,10 @@ const PaymentSection: React.FC = () => {
   const fetchPaymentMethods = async () => {
     setIsLoading(true);
     try {
-      // Check if the payment_methods table exists by using a safer approach
-      // Instead of directly querying a table that might not exist, we'll handle
-      // the error gracefully
-      try {
-        const { data, error } = await supabase
-          .from('payment_methods')
-          .select('*')
-          .eq('user_id', profile?.id || '');
-        
-        if (error) {
-          // If there's an error (like table doesn't exist), we'll just set empty data
-          console.log("Payment methods table might not exist yet:", error.message);
-          setPaymentMethods([]);
-        } else {
-          setPaymentMethods(data as PaymentMethod[] || []);
-        }
-      } catch (e) {
-        console.error("Error with payment methods query:", e);
-        setPaymentMethods([]);
-      }
+      // Since the payment_methods table doesn't exist in the database yet,
+      // we'll just set empty data to avoid errors
+      console.log("Payment methods feature is not fully implemented yet");
+      setPaymentMethods([]);
     } finally {
       setIsLoading(false);
     }
@@ -99,27 +84,10 @@ const PaymentSection: React.FC = () => {
       const lastFour = values.cardNumber.slice(-4);
       const maskedCardNumber = "*".repeat(values.cardNumber.length - 4) + lastFour;
       
-      // This would insert into the payment_methods table if it existed
-      // For now, we'll just show a success message
-      /* 
-      const { error } = await supabase
-        .from('payment_methods')
-        .insert({
-          user_id: profile?.id,
-          card_number: maskedCardNumber,
-          cardholder_name: values.cardholderName,
-          expiry_date: values.expiryDate,
-          last_four: lastFour
-        });
-      
-      if (error) throw error;
-      */
-      
+      // We'll just show a success message since the database table doesn't exist
+      toast.success("Payment method would be added. Feature coming soon!");
       setIsAddingPayment(false);
       form.reset();
-      toast.success("Payment method would be added. Feature coming soon!");
-      // After adding, refresh the list
-      // fetchPaymentMethods();
     } catch (error: any) {
       handleDatabaseError(error, "Add payment method");
     } finally {
