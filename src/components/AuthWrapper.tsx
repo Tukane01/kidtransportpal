@@ -10,6 +10,7 @@ import ParentRegisterForm from "@/components/ParentRegisterForm";
 import DriverRegisterForm from "@/components/DriverRegisterForm";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
 const AuthWrapper: React.FC = () => {
   const [activeTab, setActiveTab] = useState("login");
@@ -18,8 +19,10 @@ const AuthWrapper: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Check if user is already authenticated and redirect to dashboard if they are
     if (isAuthenticated && !isLoading) {
-      navigate('/dashboard');
+      console.log("User already authenticated, redirecting to dashboard");
+      navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate]);
 
@@ -34,7 +37,10 @@ const AuthWrapper: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="animate-spin h-10 w-10 border-4 border-schoolride-primary border-t-transparent rounded-full"></div>
+        <div className="flex flex-col items-center">
+          <Loader2 className="mr-2 h-8 w-8 animate-spin text-schoolride-primary" />
+          <span className="text-gray-800 mt-2">Loading authentication...</span>
+        </div>
       </div>
     );
   }

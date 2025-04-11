@@ -10,6 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { loginSchema } from "@/utils/validation";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const LoginForm: React.FC = () => {
   const { login, loginWithGoogle } = useAuth();
@@ -29,6 +30,7 @@ const LoginForm: React.FC = () => {
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
+    setLoginError("");
     
     try {
       const success = await login(values.email, values.password);
@@ -38,6 +40,7 @@ const LoginForm: React.FC = () => {
       }
     } catch (error) {
       console.error("Login error:", error);
+      setLoginError("Login failed. Please check your credentials.");
     } finally {
       setIsLoading(false);
     }
@@ -48,7 +51,6 @@ const LoginForm: React.FC = () => {
     setLoginError("");
     
     try {
-      // Now using the proper loginWithGoogle function
       const success = await loginWithGoogle();
       if (success) {
         navigate("/dashboard");
@@ -64,6 +66,13 @@ const LoginForm: React.FC = () => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {loginError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{loginError}</AlertDescription>
+          </Alert>
+        )}
+        
         <FormField
           control={form.control}
           name="email"
@@ -104,18 +113,12 @@ const LoginForm: React.FC = () => {
         
         <Button
           type="button"
-          className="w-full text-sm text-gray-500"
+          variant="ghost"
+          className="w-full text-sm text-gray-500 p-0 h-auto"
           onClick={() => setShowPassword(!showPassword)}
         >
-          {showPassword ? "Hide" : "Show"}
+          {showPassword ? "Hide password" : "Show password"}
         </Button>
-        
-        {loginError && (
-          <div className="text-destructive text-sm flex items-center gap-2">
-            <AlertCircle className="h-4 w-4" />
-            <span>{loginError}</span>
-          </div>
-        )}
         
         <div className="pt-2">
           <Button

@@ -7,19 +7,30 @@ export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean>(false)
 
   React.useEffect(() => {
+    // Helper function to check if device is mobile
+    const checkIsMobile = () => {
+      return window.innerWidth < MOBILE_BREAKPOINT;
+    };
+
     // Set initial value
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+    setIsMobile(checkIsMobile());
     
     const handleResize = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    }
+      setIsMobile(checkIsMobile());
+    };
     
-    // Add event listener
-    window.addEventListener("resize", handleResize)
+    // Add event listener for resize
+    window.addEventListener("resize", handleResize);
+    
+    // Also listen for orientation changes on mobile devices
+    window.addEventListener("orientationchange", handleResize);
     
     // Clean up
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+    };
+  }, []);
 
-  return isMobile
+  return isMobile;
 }
