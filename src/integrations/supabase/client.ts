@@ -20,6 +20,14 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 // Add error handling for database operations
 export const handleDatabaseError = (error: any, operation: string) => {
   console.error(`Database ${operation} error:`, error);
-  toast.error(`Failed to ${operation.toLowerCase()}: ${error.message || 'Unknown error'}`);
+  
+  // Check if this is a "relation does not exist" error
+  if (error.message && error.message.includes("relation") && error.message.includes("does not exist")) {
+    console.warn("Table does not exist yet:", error.message);
+    toast.error(`This feature is not fully implemented yet. Database table is missing.`);
+  } else {
+    toast.error(`Failed to ${operation.toLowerCase()}: ${error.message || 'Unknown error'}`);
+  }
+  
   return { error };
 };

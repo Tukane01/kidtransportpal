@@ -40,7 +40,7 @@ export function useIsMobile() {
           return true; // Deprecated, but good fallback
         } else {
           // Only as a last resort, fall back to user agent
-          const UA = navigator.userAgent;
+          const UA = navigator.userAgent || '';
           return /\b(BlackBerry|webOS|iPhone|IEMobile)\b/i.test(UA) ||
             /\b(Android|Windows Phone|iPad|iPod)\b/i.test(UA);
         }

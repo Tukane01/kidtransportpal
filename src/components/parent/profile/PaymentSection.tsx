@@ -57,21 +57,26 @@ const PaymentSection: React.FC = () => {
   const fetchPaymentMethods = async () => {
     setIsLoading(true);
     try {
-      // This query would need a payment_methods table to be created in the database
-      // This is just a placeholder for now, as the table doesn't exist yet
-      const { data, error } = await supabase
-        .from('payment_methods')
-        .select('*')
-        .eq('user_id', profile?.id || '');
-      
-      if (error) {
-        throw error;
+      // Check if the payment_methods table exists by using a safer approach
+      // Instead of directly querying a table that might not exist, we'll handle
+      // the error gracefully
+      try {
+        const { data, error } = await supabase
+          .from('payment_methods')
+          .select('*')
+          .eq('user_id', profile?.id || '');
+        
+        if (error) {
+          // If there's an error (like table doesn't exist), we'll just set empty data
+          console.log("Payment methods table might not exist yet:", error.message);
+          setPaymentMethods([]);
+        } else {
+          setPaymentMethods(data as PaymentMethod[] || []);
+        }
+      } catch (e) {
+        console.error("Error with payment methods query:", e);
+        setPaymentMethods([]);
       }
-      
-      setPaymentMethods(data || []);
-    } catch (error) {
-      console.error("Error fetching payment methods:", error);
-      // Don't show error toast since the table might not exist yet
     } finally {
       setIsLoading(false);
     }
