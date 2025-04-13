@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Car } from '@/context/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 interface ProfileDisplayProps {
   name: string;
@@ -13,6 +14,8 @@ interface ProfileDisplayProps {
   cars?: Car[];
   onEdit: () => void;
   onShowCarForm: () => void;
+  onPhotoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  isUploading: boolean;
 }
 
 const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
@@ -24,18 +27,51 @@ const ProfileDisplay: React.FC<ProfileDisplayProps> = ({
   cars,
   onEdit,
   onShowCarForm,
+  onPhotoChange,
+  isUploading,
 }) => {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handlePhotoButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   return (
     <div className="space-y-6 bg-white p-6 rounded-lg shadow-sm border">
       <div className="flex flex-col md:flex-row gap-6">
         <div className="md:w-1/3 flex flex-col items-center">
-          {profileImage ? (
-            <img src={profileImage} alt="Profile" className="w-40 h-40 rounded-full object-cover" />
-          ) : (
-            <div className="w-40 h-40 rounded-full bg-gray-200 flex items-center justify-center">
-              <span className="text-2xl text-gray-500">{name && surname ? `${name[0]}${surname[0]}` : "U"}</span>
-            </div>
-          )}
+          <div className="relative">
+            {profileImage ? (
+              <img src={profileImage} alt="Profile" className="w-40 h-40 rounded-full object-cover" />
+            ) : (
+              <div className="w-40 h-40 rounded-full bg-gray-200 flex items-center justify-center">
+                <span className="text-2xl text-gray-500">{name && surname ? `${name[0]}${surname[0]}` : "U"}</span>
+              </div>
+            )}
+            {isUploading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
+                <Loader2 className="h-10 w-10 animate-spin text-white" />
+              </div>
+            )}
+          </div>
+          <input 
+            type="file"
+            ref={fileInputRef}
+            onChange={onPhotoChange}
+            accept="image/*"
+            className="hidden"
+          />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="text-gray-800 border-gray-300 mt-4"
+            onClick={handlePhotoButtonClick}
+            disabled={isUploading}
+          >
+            {isUploading ? "Uploading..." : "Change Photo"}
+          </Button>
         </div>
         
         <div className="md:w-2/3 space-y-4">

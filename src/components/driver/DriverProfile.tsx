@@ -4,6 +4,8 @@ import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Import refactored components
 import ProfileHeader from './profile/ProfileHeader';
@@ -15,6 +17,7 @@ import { useProfileImage } from './profile/useProfileImage';
 const DriverProfile: React.FC = () => {
   const { profile, updateProfile, refreshProfile, signOut } = useSupabaseAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
   const [phone, setPhone] = useState('');
@@ -22,6 +25,7 @@ const DriverProfile: React.FC = () => {
   const [showCarForm, setShowCarForm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   const { profileImage, setProfileImage, handleImageUpload } = useProfileImage(profile?.id);
 
@@ -34,6 +38,21 @@ const DriverProfile: React.FC = () => {
       setProfileImage(profile.profileImage || '');
     }
   }, [profile, setProfileImage]);
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return;
+    
+    try {
+      setIsUploading(true);
+      const file = e.target.files[0];
+      await handleImageUpload(e);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to update profile photo');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     const userData = {
@@ -76,7 +95,17 @@ const DriverProfile: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <ProfileHeader isDeleting={isDeleting} onDeleteAccount={handleDeleteAccount} />
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Driver Profile</h1>
+        <button
+          onClick={handleDeleteAccount}
+          disabled={isDeleting}
+          className="text-red-600 hover:text-red-800 flex items-center"
+        >
+          {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {isDeleting ? "Deleting Account..." : "Delete Account"}
+        </button>
+      </div>
 
       {isEditing ? (
         <ProfileForm
@@ -90,7 +119,8 @@ const DriverProfile: React.FC = () => {
           onPhoneChange={(e) => setPhone(e.target.value)}
           onIdNumberChange={(e) => setIdNumber(e.target.value)}
           onProfileImageChange={(e) => setProfileImage(e.target.value)}
-          onImageUpload={handleImageUpload}
+          onImageUpload={handlePhotoChange}
+          isUploading={isUploading}
           onSave={handleSaveProfile}
           onCancel={() => setIsEditing(false)}
         />
@@ -104,6 +134,8 @@ const DriverProfile: React.FC = () => {
           cars={profile?.cars}
           onEdit={() => setIsEditing(true)}
           onShowCarForm={() => setShowCarForm(true)}
+          onPhotoChange={handlePhotoChange}
+          isUploading={isUploading}
         />
       )}
 

@@ -27,14 +27,13 @@ export function useIsMobile() {
       // Use type guard to ensure navigator is defined
       if (typeof navigator !== 'undefined') {
         if ('maxTouchPoints' in navigator) {
-          return (navigator as any).maxTouchPoints > 0;
+          return navigator.maxTouchPoints > 0;
         } else if ('msMaxTouchPoints' in navigator) {
           return (navigator as any).msMaxTouchPoints > 0;
         } else {
-          // Use userAgent only if in a browser environment
-          const userAgent = navigator.userAgent || '';
-          return /\b(BlackBerry|webOS|iPhone|IEMobile)\b/i.test(userAgent) ||
-            /\b(Android|Windows Phone|iPad|iPod)\b/i.test(userAgent);
+          // Safely check userAgent with type guard
+          const mobileUA = /\b(BlackBerry|webOS|iPhone|IEMobile|Android|Windows Phone|iPad|iPod)\b/i;
+          return typeof navigator.userAgent === 'string' && mobileUA.test(navigator.userAgent);
         }
       }
       return false;
