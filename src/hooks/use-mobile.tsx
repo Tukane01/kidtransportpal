@@ -31,9 +31,9 @@ export function useIsMobile() {
         } else if ('msMaxTouchPoints' in navigator) {
           return (navigator as any).msMaxTouchPoints > 0;
         } else {
-          // Safely check userAgent with type guard
+          // Fixed userAgent access with proper type checking
           const mobileUA = /\b(BlackBerry|webOS|iPhone|IEMobile|Android|Windows Phone|iPad|iPod)\b/i;
-          return typeof navigator.userAgent === 'string' && mobileUA.test(navigator.userAgent);
+          return navigator.userAgent !== undefined && mobileUA.test(navigator.userAgent);
         }
       }
       return false;
