@@ -34,7 +34,10 @@ export function useIsMobile() {
           // Fixed userAgent access with proper type checking
           const mobileUA = /\b(BlackBerry|webOS|iPhone|IEMobile|Android|Windows Phone|iPad|iPod)\b/i;
           const userAgent = (navigator as any).userAgent;
-          return typeof userAgent === 'string' && mobileUA.test(userAgent);
+          if (typeof userAgent === 'string') {
+            return mobileUA.test(userAgent);
+          }
+          return false;
         }
       }
       return false;
