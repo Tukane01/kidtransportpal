@@ -33,7 +33,7 @@ export function useIsMobile() {
         } else {
           // Fixed userAgent access with proper type checking
           const mobileUA = /\b(BlackBerry|webOS|iPhone|IEMobile|Android|Windows Phone|iPad|iPod)\b/i;
-          return navigator.userAgent !== undefined && mobileUA.test(navigator.userAgent);
+          return typeof navigator.userAgent === 'string' && mobileUA.test(navigator.userAgent);
         }
       }
       return false;
