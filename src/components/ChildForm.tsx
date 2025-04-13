@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -5,77 +6,125 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { childRegistrationSchema } from "@/utils/validation";
 import { Loader2 } from "lucide-react";
-import { useRide } from "@/context/RideContext";
+import { useSupabaseAuth } from "@/context/SupabaseAuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-// Define the Child interface
 export interface ChildFormData {
   name: string;
   surname: string;
-  idNumber: string;
   schoolName: string;
   schoolAddress: string;
+  idNumber: string;
+  id?: string;
 }
 
 interface ChildFormProps {
   onComplete: (data: ChildFormData) => void;
   onCancel: () => void;
+  existingChild?: ChildFormData;
 }
 
-const ChildForm: React.FC<ChildFormProps> = ({ onComplete, onCancel }) => {
-  const { addChild } = useRide();
+const childSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  surname: z.string().min(2, "Surname must be at least 2 characters"),
+  schoolName: z.string().min(2, "School name must be at least 2 characters"),
+  schoolAddress: z.string().min(5, "School address must be at least 5 characters"),
+  idNumber: z.string().optional(),
+});
+
+const ChildForm: React.FC<ChildFormProps> = ({ onComplete, onCancel, existingChild }) => {
+  const { user } = useSupabaseAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isUpdating = !!existingChild;
   
-  const form = useForm<z.infer<typeof childRegistrationSchema>>({
-    resolver: zodResolver(childRegistrationSchema),
-    defaultValues: {
+  const form = useForm<z.infer<typeof childSchema>>({
+    resolver: zodResolver(childSchema),
+    defaultValues: existingChild || {
       name: "",
       surname: "",
-      idNumber: "",
       schoolName: "",
       schoolAddress: "",
+      idNumber: "",
     },
   });
   
-  const onSubmit = async (values: z.infer<typeof childRegistrationSchema>) => {
+  const handleSubmit = async (values: z.infer<typeof childSchema>) => {
+    if (!user) {
+      toast.error("You must be logged in to add a child");
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
-      // Ensure all required fields are present
-      const childData: ChildFormData = {
+      if (isUpdating && existingChild?.id) {
+        // Update existing child
+        const { error } = await supabase
+          .from('children')
+          .update({
+            name: values.name,
+            surname: values.surname,
+            school_name: values.schoolName,
+            school_address: values.schoolAddress,
+            id_number: values.idNumber || null,
+          })
+          .eq('id', existingChild.id);
+          
+        if (error) throw error;
+        
+        toast.success("Child updated successfully");
+      } else {
+        // Create new child
+        const { error } = await supabase
+          .from('children')
+          .insert({
+            parent_id: user.id,
+            name: values.name,
+            surname: values.surname,
+            school_name: values.schoolName,
+            school_address: values.schoolAddress,
+            id_number: values.idNumber || null,
+          });
+          
+        if (error) throw error;
+        
+        toast.success("Child added successfully");
+      }
+      
+      const formattedData: ChildFormData = {
         name: values.name,
         surname: values.surname,
-        idNumber: values.idNumber,
         schoolName: values.schoolName,
-        schoolAddress: values.schoolAddress
+        schoolAddress: values.schoolAddress,
+        idNumber: values.idNumber || "",
+        id: existingChild?.id
       };
       
-      await addChild(childData);
-      onComplete(childData);
+      onComplete(formattedData);
     } catch (error) {
-      console.error("Error adding child:", error);
+      console.error("Error saving child:", error);
+      toast.error(`Failed to ${isUpdating ? 'update' : 'add'} child`);
     } finally {
       setIsSubmitting(false);
     }
   };
   
   return (
-    <div>
-      <h2 className="font-heading text-xl font-bold mb-4">Child Information</h2>
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Child's First Name</FormLabel>
+                <FormLabel className="text-gray-700">First Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Child's first name" {...field} disabled={isSubmitting} />
+                  <Input {...field} disabled={isSubmitting} className="bg-white text-gray-800 border-gray-300" />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-red-600" />
               </FormItem>
             )}
           />
@@ -85,97 +134,85 @@ const ChildForm: React.FC<ChildFormProps> = ({ onComplete, onCancel }) => {
             name="surname"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Child's Surname</FormLabel>
+                <FormLabel className="text-gray-700">Surname</FormLabel>
                 <FormControl>
-                  <Input placeholder="Child's surname" {...field} disabled={isSubmitting} />
+                  <Input {...field} disabled={isSubmitting} className="bg-white text-gray-800 border-gray-300" />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-red-600" />
               </FormItem>
             )}
           />
-          
-          <FormField
-            control={form.control}
-            name="idNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Child's ID Number</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Child's 13-digit ID number" 
-                    {...field} 
-                    disabled={isSubmitting} 
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+        </div>
+        
+        <FormField
+          control={form.control}
+          name="idNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-gray-700">ID Number (Optional)</FormLabel>
+              <FormControl>
+                <Input {...field} disabled={isSubmitting} className="bg-white text-gray-800 border-gray-300" />
+              </FormControl>
+              <FormMessage className="text-red-600" />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="schoolName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-gray-700">School Name</FormLabel>
+              <FormControl>
+                <Input {...field} disabled={isSubmitting} className="bg-white text-gray-800 border-gray-300" />
+              </FormControl>
+              <FormMessage className="text-red-600" />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="schoolAddress"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-gray-700">School Address</FormLabel>
+              <FormControl>
+                <Input {...field} disabled={isSubmitting} className="bg-white text-gray-800 border-gray-300" />
+              </FormControl>
+              <FormMessage className="text-red-600" />
+            </FormItem>
+          )}
+        />
+        
+        <div className="flex justify-end gap-3 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            className="text-gray-800 border-gray-300"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            className="bg-schoolride-primary hover:bg-schoolride-secondary text-white"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                {isUpdating ? "Updating..." : "Adding..."}
+              </>
+            ) : (
+              isUpdating ? "Update Child" : "Add Child"
             )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="schoolName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>School Name</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Enter school name" 
-                    {...field} 
-                    disabled={isSubmitting}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="schoolAddress"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>School Address</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Enter school address" 
-                    {...field} 
-                    disabled={isSubmitting}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <div className="flex justify-between pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isSubmitting}
-            >
-              Back
-            </Button>
-            
-            <Button
-              type="submit"
-              className="bg-schoolride-primary hover:bg-schoolride-secondary"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                  Saving...
-                </>
-              ) : (
-                "Save Child"
-              )}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </div>
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };
 

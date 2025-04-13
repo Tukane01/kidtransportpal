@@ -6,11 +6,10 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { carRegistrationSchema } from "@/utils/validation";
 import { Loader2 } from "lucide-react";
-import { useRide } from "@/context/RideContext";
+import { useSupabaseAuth } from "@/context/SupabaseAuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Car } from "@/context/AuthContext";
 
 export interface CarFormData {
   make: string;
@@ -19,195 +18,210 @@ export interface CarFormData {
   color: string;
   vinNumber: string;
   ownerIdNumber: string;
+  id?: string;
 }
 
 interface CarFormProps {
   onComplete: (data: CarFormData) => void;
   onCancel: () => void;
   driverIdNumber: string;
+  existingCar?: CarFormData;
 }
 
-const CarForm: React.FC<CarFormProps> = ({ onComplete, onCancel, driverIdNumber }) => {
-  const { addCar } = useRide();
+const carSchema = z.object({
+  make: z.string().min(2, "Make must be at least 2 characters"),
+  model: z.string().min(2, "Model must be at least 2 characters"),
+  registrationNumber: z.string().min(5, "Registration number must be at least 5 characters"),
+  color: z.string().min(3, "Color must be at least 3 characters"),
+  vinNumber: z.string().min(5, "VIN number must be at least 5 characters"),
+});
+
+const CarForm: React.FC<CarFormProps> = ({ onComplete, onCancel, driverIdNumber, existingCar }) => {
+  const { user } = useSupabaseAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isUpdating = !!existingCar;
   
-  const form = useForm<z.infer<typeof carRegistrationSchema>>({
-    resolver: zodResolver(carRegistrationSchema),
-    defaultValues: {
+  const form = useForm<z.infer<typeof carSchema>>({
+    resolver: zodResolver(carSchema),
+    defaultValues: existingCar || {
       make: "",
       model: "",
       registrationNumber: "",
       color: "",
       vinNumber: "",
-      ownerIdNumber: driverIdNumber || "",
     },
   });
   
-  const onSubmit = async (values: z.infer<typeof carRegistrationSchema>) => {
+  const handleSubmit = async (values: z.infer<typeof carSchema>) => {
+    if (!user) {
+      toast.error("You must be logged in to add a car");
+      return;
+    }
+    
+    if (!driverIdNumber) {
+      toast.error("Please provide your ID number in your profile first");
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
-      // Verify that the owner ID matches the driver ID
-      if (values.ownerIdNumber !== driverIdNumber) {
-        toast.error("The car owner ID must match your ID number");
-        return;
+      if (isUpdating && existingCar?.id) {
+        // Update existing car
+        const { error } = await supabase
+          .from('cars')
+          .update({
+            make: values.make,
+            model: values.model,
+            registration_number: values.registrationNumber,
+            color: values.color,
+            vin_number: values.vinNumber,
+          })
+          .eq('id', existingCar.id);
+          
+        if (error) throw error;
+        
+        toast.success("Vehicle updated successfully");
+      } else {
+        // Create new car
+        const { error } = await supabase
+          .from('cars')
+          .insert({
+            owner_id: user.id,
+            make: values.make,
+            model: values.model,
+            registration_number: values.registrationNumber,
+            color: values.color,
+            vin_number: values.vinNumber,
+            owner_id_number: driverIdNumber
+          });
+          
+        if (error) throw error;
+        
+        toast.success("Vehicle added successfully");
       }
       
-      // Ensure all required fields are present
-      const carData: CarFormData = {
+      const formattedData: CarFormData = {
         make: values.make,
         model: values.model,
         registrationNumber: values.registrationNumber,
         color: values.color,
         vinNumber: values.vinNumber,
-        ownerIdNumber: values.ownerIdNumber
+        ownerIdNumber: driverIdNumber,
+        id: existingCar?.id
       };
       
-      await addCar(carData);
-      onComplete(carData);
+      onComplete(formattedData);
     } catch (error) {
-      console.error("Error adding car:", error);
+      console.error("Error saving car:", error);
+      toast.error(`Failed to ${isUpdating ? 'update' : 'add'} vehicle`);
     } finally {
       setIsSubmitting(false);
     }
   };
   
   return (
-    <div>
-      <h2 className="font-heading text-xl font-bold mb-4">Vehicle Information</h2>
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="make"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Make</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Toyota" {...field} disabled={isSubmitting} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="model"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Model</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Corolla" {...field} disabled={isSubmitting} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="registrationNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Registration Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. CA123456" {...field} disabled={isSubmitting} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Color</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="e.g. Silver" 
-                      {...field} 
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="vinNumber"
+            name="make"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>VIN Number</FormLabel>
+                <FormLabel className="text-gray-700">Make</FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="17-character VIN number" 
-                    {...field} 
-                    disabled={isSubmitting}
-                  />
+                  <Input {...field} disabled={isSubmitting} className="bg-white text-gray-800 border-gray-300" />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-red-600" />
               </FormItem>
             )}
           />
           
           <FormField
             control={form.control}
-            name="ownerIdNumber"
+            name="model"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Owner's ID Number</FormLabel>
+                <FormLabel className="text-gray-700">Model</FormLabel>
                 <FormControl>
-                  <Input 
-                    placeholder="Must match your ID number" 
-                    {...field} 
-                    disabled={isSubmitting}
-                  />
+                  <Input {...field} disabled={isSubmitting} className="bg-white text-gray-800 border-gray-300" />
                 </FormControl>
-                <FormMessage className="text-xs">
-                  Must match your ID number used for registration
-                </FormMessage>
+                <FormMessage className="text-red-600" />
               </FormItem>
             )}
           />
-          
-          <div className="flex justify-between pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isSubmitting}
-            >
-              Back
-            </Button>
-            
-            <Button
-              type="submit"
-              className="bg-schoolride-primary hover:bg-schoolride-secondary"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                  Saving...
-                </>
-              ) : (
-                "Save Vehicle"
-              )}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </div>
+        </div>
+        
+        <FormField
+          control={form.control}
+          name="color"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-gray-700">Color</FormLabel>
+              <FormControl>
+                <Input {...field} disabled={isSubmitting} className="bg-white text-gray-800 border-gray-300" />
+              </FormControl>
+              <FormMessage className="text-red-600" />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="registrationNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-gray-700">Registration Number</FormLabel>
+              <FormControl>
+                <Input {...field} disabled={isSubmitting} className="bg-white text-gray-800 border-gray-300" />
+              </FormControl>
+              <FormMessage className="text-red-600" />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="vinNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-gray-700">VIN Number</FormLabel>
+              <FormControl>
+                <Input {...field} disabled={isSubmitting} className="bg-white text-gray-800 border-gray-300" />
+              </FormControl>
+              <FormMessage className="text-red-600" />
+            </FormItem>
+          )}
+        />
+        
+        <div className="flex justify-end gap-3 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            className="text-gray-800 border-gray-300"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            className="bg-schoolride-primary hover:bg-schoolride-secondary text-white"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                {isUpdating ? "Updating..." : "Adding..."}
+              </>
+            ) : (
+              isUpdating ? "Update Vehicle" : "Add Vehicle"
+            )}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };
 

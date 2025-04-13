@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2, Edit, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import ChildForm from "@/components/ChildForm";
 import {
@@ -14,6 +14,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/context/SupabaseAuthContext";
 
@@ -29,9 +39,12 @@ type Child = {
 const ChildrenSection: React.FC = () => {
   const { user, refreshProfile } = useSupabaseAuth();
   const [showAddChildDialog, setShowAddChildDialog] = useState(false);
+  const [showEditChildDialog, setShowEditChildDialog] = useState(false);
   const [childToDelete, setChildToDelete] = useState<Child | null>(null);
+  const [childToEdit, setChildToEdit] = useState<Child | null>(null);
   const [children, setChildren] = useState<Child[]>([]);
   const [isLoadingChildren, setIsLoadingChildren] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   useEffect(() => {
     const fetchChildren = async () => {
@@ -71,6 +84,7 @@ const ChildrenSection: React.FC = () => {
   const handleDeleteChild = async () => {
     if (!childToDelete) return;
     
+    setIsDeleting(true);
     try {
       const { error } = await supabase
         .from('children')
@@ -85,6 +99,8 @@ const ChildrenSection: React.FC = () => {
     } catch (error) {
       console.error("Error deleting child:", error);
       toast.error("Failed to delete child");
+    } finally {
+      setIsDeleting(false);
     }
   };
   
@@ -92,6 +108,18 @@ const ChildrenSection: React.FC = () => {
     setShowAddChildDialog(false);
     refreshProfile(true); // Refresh to get updated children
     toast.success("Child added successfully");
+  };
+
+  const handleEditChildComplete = () => {
+    setShowEditChildDialog(false);
+    setChildToEdit(null);
+    refreshProfile(true); // Refresh to get updated children
+    toast.success("Child updated successfully");
+  };
+
+  const handleEditChild = (child: Child) => {
+    setChildToEdit(child);
+    setShowEditChildDialog(true);
   };
   
   return (
@@ -130,7 +158,7 @@ const ChildrenSection: React.FC = () => {
             {children.map((child) => (
               <div
                 key={child.id}
-                className="border rounded-md p-4 bg-gray-50 flex justify-between items-center"
+                className="border rounded-md p-4 bg-gray-50 flex justify-between items-center hover:shadow-md transition-shadow"
               >
                 <div>
                   <div className="font-medium text-gray-900">
@@ -144,42 +172,58 @@ const ChildrenSection: React.FC = () => {
                     Address: {child.schoolAddress}
                   </div>
                 </div>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => setChildToDelete(child)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle className="text-gray-900">Delete Child</DialogTitle>
-                      <DialogDescription className="text-gray-700">
-                        Are you sure you want to remove {child.name} {child.surname}? This action cannot be undone.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setChildToDelete(null)}
-                        className="text-gray-800 border-gray-300"
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-blue-500 hover:text-blue-700 hover:bg-blue-50 flex items-center gap-1"
+                    onClick={() => handleEditChild(child)}
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 flex items-center gap-1"
+                        onClick={() => setChildToDelete(child)}
                       >
-                        Cancel
-                      </Button>
-                      <Button 
-                        variant="destructive"
-                        onClick={handleDeleteChild}
-                        className="text-white"
-                      >
+                        <Trash2 className="h-4 w-4" />
                         Delete
                       </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-red-600 flex items-center">
+                          <AlertTriangle className="mr-2 h-5 w-5" />
+                          Delete Child
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to remove {child.name} {child.surname}? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleDeleteChild}
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                          disabled={isDeleting}
+                        >
+                          {isDeleting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            "Delete"
+                          )}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             ))}
           </div>
@@ -196,6 +240,40 @@ const ChildrenSection: React.FC = () => {
           </div>
         )}
       </CardContent>
+
+      {/* Edit Child Dialog */}
+      <Dialog open={showEditChildDialog} onOpenChange={(open) => {
+        if (!open) {
+          setShowEditChildDialog(false);
+          setChildToEdit(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-gray-900">Edit Child</DialogTitle>
+            <DialogDescription className="text-gray-700">
+              Update your child's details
+            </DialogDescription>
+          </DialogHeader>
+          {childToEdit && (
+            <ChildForm 
+              onComplete={handleEditChildComplete} 
+              onCancel={() => {
+                setShowEditChildDialog(false);
+                setChildToEdit(null);
+              }}
+              existingChild={{
+                name: childToEdit.name,
+                surname: childToEdit.surname,
+                schoolName: childToEdit.schoolName,
+                schoolAddress: childToEdit.schoolAddress,
+                idNumber: childToEdit.idNumber || "",
+                id: childToEdit.id
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

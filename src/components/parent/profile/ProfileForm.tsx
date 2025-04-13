@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { nameSchema, phoneSchema, emailSchema } from "@/utils/validation";
 import { useSupabaseAuth } from "@/context/SupabaseAuthContext";
-import { Loader2 } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 
 const profileSchema = z.object({
@@ -157,7 +157,10 @@ const ProfileForm: React.FC = () => {
               Saving...
             </>
           ) : (
-            "Save Changes"
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save Changes
+            </>
           )}
         </Button>
       </form>

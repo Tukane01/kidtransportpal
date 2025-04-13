@@ -12,11 +12,17 @@ import PaymentSection from "./profile/PaymentSection";
 import AccountActions from "./profile/AccountActions";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Trash2, AlertTriangle, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const ParentProfile: React.FC = () => {
-  const { profile, user, refreshProfile } = useSupabaseAuth();
+  const { profile, user, refreshProfile, signOut } = useSupabaseAuth();
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   
   const handleRefresh = async () => {
     await refreshProfile(true);
@@ -63,12 +69,77 @@ const ParentProfile: React.FC = () => {
       setIsUploading(false);
     }
   };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      // Call the delete_user database function
+      const { error } = await supabase.rpc('delete_user');
+      
+      if (error) throw error;
+      
+      // Sign out the user
+      await signOut();
+      toast.success("Account deleted successfully");
+      navigate('/auth');
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      toast.error("Failed to delete account: " + (error as Error).message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
-        <AccountActions onRefresh={handleRefresh} />
+        <div className="flex items-center gap-2">
+          <AccountActions onRefresh={handleRefresh} />
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="text-white"
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Account
+                  </>
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-red-600 flex items-center">
+                  <AlertTriangle className="mr-2 h-5 w-5" />
+                  Delete Account
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete your account
+                  and remove all your data from our servers.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleDeleteAccount}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Delete Account
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
       
       <Tabs defaultValue="personal" className={isMobile ? "w-full" : ""}>
