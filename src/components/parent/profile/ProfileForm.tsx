@@ -36,15 +36,15 @@ const ProfileForm: React.FC = () => {
 
   // Update form when profile changes
   useEffect(() => {
-    if (profile && user) {
-      form.reset({
-        name: profile.name || "",
-        surname: profile.surname || "",
-        email: user.email || "",
-        phone: profile.phone || "",
-        idNumber: profile.idNumber || "",
-      });
-    }
+  if (profile && user) {
+    form.reset({
+      name: profile.name || "",
+      surname: profile.surname || "",
+      email: user.email || "",
+      phone: profile.phone || "",
+      idNumber: profile.idNumber || "",
+    });
+  }
   }, [profile, user, form]);
   
   const onSubmitProfile = async (values: z.infer<typeof profileSchema>) => {
