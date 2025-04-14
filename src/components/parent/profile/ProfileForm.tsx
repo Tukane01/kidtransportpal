@@ -82,7 +82,7 @@ const ProfileForm: React.FC = () => {
               <FormItem>
                 <FormLabel className="text-gray-700">First Name</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={isLoading} className="bg-white text-gray-800 border-gray-300" />
+                  <Input {...field} className="bg-white text-gray-800 border-gray-300" />
                 </FormControl>
                 <FormMessage className="text-red-600" />
               </FormItem>
