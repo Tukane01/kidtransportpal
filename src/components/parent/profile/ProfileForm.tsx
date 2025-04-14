@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -22,7 +21,8 @@ const profileSchema = z.object({
 const ProfileForm: React.FC = () => {
   const { profile, user, updateProfile } = useSupabaseAuth();
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [hasReset, setHasReset] = useState(false); // Track if the form has been reset
+
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -34,22 +34,24 @@ const ProfileForm: React.FC = () => {
     },
   });
 
-  // Update form when profile changes
+  // Update form when profile changes but only reset once
   useEffect(() => {
-  if (profile && user) {
-    form.reset({
-      name: profile.name || "",
-      surname: profile.surname || "",
-      email: user.email || "",
-      phone: profile.phone || "",
-      idNumber: profile.idNumber || "",
-    });
-  }
-  }, [profile, user, form]);
-  
+    if (profile && user && !hasReset) {
+      form.reset({
+        name: profile.name || "",
+        surname: profile.surname || "",
+        email: user.email || "",
+        phone: profile.phone || "",
+        idNumber: profile.idNumber || "",
+      });
+
+      setHasReset(true); // Prevent further resets
+    }
+  }, [profile, user, hasReset, form]);
+
   const onSubmitProfile = async (values: z.infer<typeof profileSchema>) => {
     setIsLoading(true);
-    
+
     try {
       const { error } = await updateProfile({
         name: values.name,
@@ -57,11 +59,11 @@ const ProfileForm: React.FC = () => {
         phone: values.phone,
         idNumber: values.idNumber,
       });
-      
+
       if (error) {
         throw error;
       }
-      
+
       toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -70,7 +72,7 @@ const ProfileForm: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitProfile)} className="space-y-4">
@@ -88,7 +90,7 @@ const ProfileForm: React.FC = () => {
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="surname"
@@ -96,14 +98,14 @@ const ProfileForm: React.FC = () => {
               <FormItem>
                 <FormLabel className="text-gray-700">Surname</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={isLoading} className="bg-white text-gray-800 border-gray-300" />
+                  <Input {...field} className="bg-white text-gray-800 border-gray-300" />
                 </FormControl>
                 <FormMessage className="text-red-600" />
               </FormItem>
             )}
           />
         </div>
-        
+
         <FormField
           control={form.control}
           name="email"
@@ -117,7 +119,7 @@ const ProfileForm: React.FC = () => {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="phone"
@@ -131,7 +133,7 @@ const ProfileForm: React.FC = () => {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="idNumber"
@@ -145,7 +147,7 @@ const ProfileForm: React.FC = () => {
             </FormItem>
           )}
         />
-        
+
         <Button
           type="submit"
           className="w-full sm:w-auto bg-schoolride-primary hover:bg-schoolride-secondary text-white"
@@ -153,7 +155,7 @@ const ProfileForm: React.FC = () => {
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Saving...
             </>
           ) : (
