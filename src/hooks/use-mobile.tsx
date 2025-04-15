@@ -24,8 +24,8 @@ export function useIsMobile() {
     
     // Improved touch screen detection with type safety
     const hasTouchScreen = () => {
-      // Use type guard to ensure navigator is defined
-      if (typeof navigator !== 'undefined') {
+      // Use type guard to ensure navigator is defined and has the correct type
+      if (typeof navigator !== 'undefined' && 'userAgent' in navigator) {
         if ('maxTouchPoints' in navigator) {
           return navigator.maxTouchPoints > 0;
         } else if ('msMaxTouchPoints' in navigator) {
@@ -33,8 +33,11 @@ export function useIsMobile() {
         } else {
           // Fixed userAgent access with proper type checking
           const mobileUA = /\b(BlackBerry|webOS|iPhone|IEMobile|Android|Windows Phone|iPad|iPod)\b/i;
-          const userAgent = navigator.userAgent;
-          return typeof userAgent === 'string' && mobileUA.test(userAgent);
+          const userAgent = (navigator as any).userAgent;
+          if (typeof userAgent === 'string') {
+            return mobileUA.test(userAgent);
+          }
+          return false;
         }
       }
       return false;
