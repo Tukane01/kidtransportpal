@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -10,14 +9,18 @@ import { driverRegistrationSchema } from "@/utils/validation";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Switch } from "@/components/ui/switch";
+import CarForm, { CarFormData } from "@/components/CarForm";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { checkAgeFromIdNumber } from "@/utils/validation";
+import { supabase } from "@/integrations/supabase/client";
 
 const DriverRegisterForm: React.FC = () => {
   const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [hasCar, setHasCar] = useState(false);
+  const [showCarForm, setShowCarForm] = useState(false);
+  const [carFormCompleted, setCarFormCompleted] = useState(false);
+  const [carData, setCarData] = useState<CarFormData | null>(null);
   
   const form = useForm<z.infer<typeof driverRegistrationSchema>>({
     resolver: zodResolver(driverRegistrationSchema),
@@ -30,13 +33,6 @@ const DriverRegisterForm: React.FC = () => {
       phone: "",
       idNumber: "",
       hasCar: false,
-      carData: {
-        make: "",
-        model: "",
-        registrationNumber: "",
-        color: "",
-        vinNumber: "",
-      },
     },
   });
   
@@ -44,6 +40,11 @@ const DriverRegisterForm: React.FC = () => {
     const idValidation = checkAgeFromIdNumber(values.idNumber);
     if (!idValidation.isValid) {
       toast.error(`Drivers must be between 25-65 years old. You are ${idValidation.age}`);
+      return;
+    }
+    
+    if (hasCar && !carFormCompleted) {
+      setShowCarForm(true);
       return;
     }
     
@@ -65,7 +66,7 @@ const DriverRegisterForm: React.FC = () => {
         idNumber: values.idNumber
       });
       
-      if (success && hasCar && values.carData) {
+      if (success && carData) {
         const { data: authData } = await supabase.auth.getUser();
         
         if (authData?.user) {
@@ -73,11 +74,11 @@ const DriverRegisterForm: React.FC = () => {
             .from('cars')
             .insert({
               owner_id: authData.user.id,
-              make: values.carData.make,
-              model: values.carData.model,
-              registration_number: values.carData.registrationNumber,
-              color: values.carData.color,
-              vin_number: values.carData.vinNumber,
+              make: carData.make,
+              model: carData.model,
+              registration_number: carData.registrationNumber,
+              color: carData.color,
+              vin_number: carData.vinNumber,
               owner_id_number: values.idNumber
             });
             
@@ -106,174 +107,85 @@ const DriverRegisterForm: React.FC = () => {
     form.setValue("hasCar", checked);
   };
   
+  const handleCarFormComplete = (data: CarFormData) => {
+    setCarData(data);
+    setCarFormCompleted(true);
+    setShowCarForm(false);
+    form.handleSubmit(onSubmit)();
+  };
+  
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>First Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter your first name" {...field} disabled={isLoading} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+    <>
+      {showCarForm ? (
+        <CarForm 
+          onComplete={handleCarFormComplete} 
+          onCancel={() => setShowCarForm(false)} 
+          driverIdNumber={form.getValues("idNumber")} 
         />
-        
-        <FormField
-          control={form.control}
-          name="surname"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Surname</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter your surname" {...field} disabled={isLoading} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="your.email@gmail.com"
-                  type="email"
-                  {...field}
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Create password" 
-                    type="password" 
-                    {...field} 
-                    disabled={isLoading}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="confirmPassword"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Confirm Password</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Confirm password" 
-                    type="password" 
-                    {...field} 
-                    disabled={isLoading}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Phone Number</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="0821234567" 
-                  {...field} 
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="idNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>ID Number</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="Enter your 13-digit ID number" 
-                  {...field} 
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="hasCar"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">Do you have a car?</FormLabel>
-                <div className="text-sm text-muted-foreground">
-                  You must have a car to register as a driver
-                </div>
-              </div>
-              <FormControl>
-                <Switch 
-                  checked={hasCar}
-                  onCheckedChange={handleToggleHasCar}
-                  disabled={isLoading}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        
-        {!hasCar && (
-          <div className="text-destructive text-sm flex items-center gap-2">
-            <AlertCircle className="h-4 w-4" />
-            <span>You must have a car to register as a driver</span>
-          </div>
-        )}
-
-        {hasCar && (
-          <div className="border p-4 rounded-lg bg-gray-50 space-y-4">
-            <h3 className="font-medium text-lg">Vehicle Information</h3>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>First Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter your first name" {...field} disabled={isLoading} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="surname"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Surname</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter your surname" {...field} disabled={isLoading} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="your.email@gmail.com"
+                      type="email"
+                      {...field}
+                      disabled={isLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="carData.make"
+                name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Make</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="e.g., Toyota" disabled={isLoading} />
+                      <Input 
+                        placeholder="Create password" 
+                        type="password" 
+                        {...field} 
+                        disabled={isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -282,12 +194,17 @@ const DriverRegisterForm: React.FC = () => {
               
               <FormField
                 control={form.control}
-                name="carData.model"
+                name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Model</FormLabel>
+                    <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="e.g., Corolla" disabled={isLoading} />
+                      <Input 
+                        placeholder="Confirm password" 
+                        type="password" 
+                        {...field} 
+                        disabled={isLoading}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -297,12 +214,16 @@ const DriverRegisterForm: React.FC = () => {
             
             <FormField
               control={form.control}
-              name="carData.color"
+              name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Color</FormLabel>
+                  <FormLabel>Phone Number</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="e.g., Silver" disabled={isLoading} />
+                    <Input 
+                      placeholder="0821234567" 
+                      {...field} 
+                      disabled={isLoading}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -311,12 +232,16 @@ const DriverRegisterForm: React.FC = () => {
             
             <FormField
               control={form.control}
-              name="carData.registrationNumber"
+              name="idNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Registration Number</FormLabel>
+                  <FormLabel>ID Number</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="e.g., ABC123GP" disabled={isLoading} />
+                    <Input 
+                      placeholder="Enter your 13-digit ID number" 
+                      {...field} 
+                      disabled={isLoading}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -325,36 +250,51 @@ const DriverRegisterForm: React.FC = () => {
             
             <FormField
               control={form.control}
-              name="carData.vinNumber"
+              name="hasCar"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>VIN Number</FormLabel>
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Do you have a car?</FormLabel>
+                    <div className="text-sm text-muted-foreground">
+                      You must have a car to register as a driver
+                    </div>
+                  </div>
                   <FormControl>
-                    <Input {...field} placeholder="Vehicle Identification Number" disabled={isLoading} />
+                    <Switch 
+                      checked={hasCar}
+                      onCheckedChange={handleToggleHasCar}
+                      disabled={isLoading}
+                    />
                   </FormControl>
-                  <FormMessage />
                 </FormItem>
               )}
             />
-          </div>
-        )}
-        
-        <Button
-          type="submit"
-          className="w-full bg-schoolride-primary hover:bg-schoolride-secondary text-white"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-              Registering...
-            </>
-          ) : (
-            "Register"
-          )}
-        </Button>
-      </form>
-    </Form>
+            
+            {!hasCar && (
+              <div className="text-destructive text-sm flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                <span>You must have a car to register as a driver</span>
+              </div>
+            )}
+            
+            <Button
+              type="submit"
+              className="w-full bg-schoolride-primary hover:bg-schoolride-secondary text-white"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                  Registering...
+                </>
+              ) : (
+                "Register"
+              )}
+            </Button>
+          </form>
+        </Form>
+      )}
+    </>
   );
 };
 
