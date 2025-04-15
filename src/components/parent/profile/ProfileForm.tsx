@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -21,6 +21,7 @@ const profileSchema = z.object({
 const ProfileForm: React.FC = () => {
   const { profile, user, updateProfile } = useSupabaseAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const hasInitialized = useRef(false); // Track if the form has been initialized
 
   // Make sure profile and user data are available before rendering the form
   if (!profile || !user) {
@@ -40,10 +41,17 @@ const ProfileForm: React.FC = () => {
     mode: "onChange",
   });
 
-  // Debugging - check if profile or user data is changing unexpectedly
+  // Only set default values once to prevent reset on re-render
   useEffect(() => {
-    console.log("Profile or user data has changed:", profile, user);
-  }, [profile, user]);
+    if (profile && user && !hasInitialized.current) {
+      hasInitialized.current = true;
+      form.setValue("name", profile.name || "");
+      form.setValue("surname", profile.surname || "");
+      form.setValue("email", user.email || "");
+      form.setValue("phone", profile.phone || "");
+      form.setValue("idNumber", profile.idNumber || "");
+    }
+  }, [profile, user, form]);
 
   const onSubmitProfile = async (values: z.infer<typeof profileSchema>) => {
     setIsLoading(true);
