@@ -22,11 +22,12 @@ const ProfileForm: React.FC = () => {
   const { profile, user, updateProfile } = useSupabaseAuth();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Wait for profile and user to be available before rendering the form
+  // Make sure profile and user data are available before rendering the form
   if (!profile || !user) {
-    return <div>Loading...</div>; // Optionally, show a loading indicator until profile and user data are available
+    return <div>Loading...</div>;
   }
 
+  // Initialize useForm with defaultValues based on profile and user
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -39,18 +40,10 @@ const ProfileForm: React.FC = () => {
     mode: "onChange",
   });
 
-  // Update form when profile changes (only reset when the values actually change)
+  // Debugging - check if profile or user data is changing unexpectedly
   useEffect(() => {
-    if (profile && user) {
-      form.reset({
-        name: profile.name || "",
-        surname: profile.surname || "",
-        email: user.email || "",
-        phone: profile.phone || "",
-        idNumber: profile.idNumber || "",
-      });
-    }
-  }, [profile, user, form]);
+    console.log("Profile or user data has changed:", profile, user);
+  }, [profile, user]);
 
   const onSubmitProfile = async (values: z.infer<typeof profileSchema>) => {
     setIsLoading(true);
