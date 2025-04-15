@@ -1,114 +1,191 @@
+
 import React, { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input"; // Assuming this is the input component you're using
-import { Button } from "@/components/ui/button"; // Assuming you're using a Button component from your UI library
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { nameSchema, phoneSchema, emailSchema, idNumberSchema } from "@/utils/validation";
+import { useSupabaseAuth } from "@/context/SupabaseAuthContext";
+import { Loader2, Save } from "lucide-react";
+import { toast } from "sonner";
 
-interface ProfileFormProps {
-  profile: { name: string; surname: string; email: string; phone: string; idNumber: string };
-  onProfileUpdate: (data: { name: string; surname: string; email: string; phone: string; idNumber: string }) => void;
-}
+const profileSchema = z.object({
+  name: nameSchema,
+  surname: nameSchema,
+  email: emailSchema,
+  phone: phoneSchema,
+  idNumber: idNumberSchema.optional(),
+});
 
-const ProfileForm: React.FC<ProfileFormProps> = ({ profile, onProfileUpdate }) => {
-  // Internal state for the form data
-  const [formData, setFormData] = useState({
-    name: "",
-    surname: "",
-    email: "",
-    phone: "",
-    idNumber: "",
+const ProfileForm: React.FC = () => {
+  const { profile, user, updateProfile } = useSupabaseAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const form = useForm<z.infer<typeof profileSchema>>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: profile?.name || "",
+      surname: profile?.surname || "",
+      email: user?.email || "",
+      phone: profile?.phone || "",
+      idNumber: profile?.idNumber || "",
+    },
+    mode: "onChange",
   });
 
-  // Sync formData with the profile data when component mounts or when profile prop changes
+  // Update form when profile changes
   useEffect(() => {
-    if (profile) {
-      setFormData({
+    if (profile && user) {
+      form.reset({
         name: profile.name || "",
         surname: profile.surname || "",
-        email: profile.email || "",
+        email: user.email || "",
         phone: profile.phone || "",
         idNumber: profile.idNumber || "",
       });
     }
-  }, [profile]); // Only run when profile changes
-
-  // Handle form input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+  }, [profile, user, form]);
+  
+  const onSubmitProfile = async (values: z.infer<typeof profileSchema>) => {
+    setIsLoading(true);
+    
+    try {
+      const { error } = await updateProfile({
+        name: values.name,
+        surname: values.surname,
+        phone: values.phone,
+        idNumber: values.idNumber,
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Failed to update profile");
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  // Handle form submit
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Send the updated form data back to the parent component
-    onProfileUpdate(formData);
-  };
-
+  
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label htmlFor="name">Name</label>
-        <Input
-          id="name"
-          name="name"
-          value={formData.name}
-          onChange={handleInputChange}
-          className="mt-2"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="surname">Surname</label>
-        <Input
-          id="surname"
-          name="surname"
-          value={formData.surname}
-          onChange={handleInputChange}
-          className="mt-2"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="email">Email</label>
-        <Input
-          id="email"
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmitProfile)} className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-700">First Name</FormLabel>
+                <FormControl>
+                  <Input 
+                    {...field} 
+                    disabled={isLoading} 
+                    className="bg-white text-gray-800 border-gray-300"
+                    placeholder="Enter your first name" 
+                  />
+                </FormControl>
+                <FormMessage className="text-red-600" />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="surname"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-700">Surname</FormLabel>
+                <FormControl>
+                  <Input 
+                    {...field} 
+                    disabled={isLoading} 
+                    className="bg-white text-gray-800 border-gray-300" 
+                    placeholder="Enter your surname"
+                  />
+                </FormControl>
+                <FormMessage className="text-red-600" />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <FormField
+          control={form.control}
           name="email"
-          value={formData.email}
-          onChange={handleInputChange}
-          className="mt-2"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-gray-700">Email</FormLabel>
+              <FormControl>
+                <Input {...field} disabled={true} className="bg-gray-100 text-gray-800 border-gray-300" />
+              </FormControl>
+              <FormMessage className="text-red-600" />
+            </FormItem>
+          )}
         />
-      </div>
-
-      <div>
-        <label htmlFor="phone">Phone</label>
-        <Input
-          id="phone"
+        
+        <FormField
+          control={form.control}
           name="phone"
-          value={formData.phone}
-          onChange={handleInputChange}
-          className="mt-2"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-gray-700">Phone Number</FormLabel>
+              <FormControl>
+                <Input 
+                  {...field} 
+                  disabled={isLoading} 
+                  className="bg-white text-gray-800 border-gray-300" 
+                  placeholder="0712345678"
+                />
+              </FormControl>
+              <FormMessage className="text-red-600" />
+            </FormItem>
+          )}
         />
-      </div>
-
-      <div>
-        <label htmlFor="idNumber">ID Number</label>
-        <Input
-          id="idNumber"
+        
+        <FormField
+          control={form.control}
           name="idNumber"
-          value={formData.idNumber}
-          onChange={handleInputChange}
-          className="mt-2"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-gray-700">ID Number</FormLabel>
+              <FormControl>
+                <Input 
+                  {...field} 
+                  disabled={isLoading} 
+                  className="bg-white text-gray-800 border-gray-300" 
+                  placeholder="Enter your 13-digit ID number"
+                />
+              </FormControl>
+              <FormMessage className="text-red-600" />
+            </FormItem>
+          )}
         />
-      </div>
-
-      <div className="mt-4">
-        <Button type="submit" className="w-full">
-          Save Changes
+        
+        <Button
+          type="submit"
+          className="w-full sm:w-auto bg-schoolride-primary hover:bg-schoolride-secondary text-white"
+          disabled={isLoading || !form.formState.isValid}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save Changes
+            </>
+          )}
         </Button>
-      </div>
-    </form>
+      </form>
+    </Form>
   );
 };
 
