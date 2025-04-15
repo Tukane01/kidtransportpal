@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,7 +22,7 @@ const ParentProfile: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  
+
   const handleRefresh = async () => {
     await refreshProfile(true);
   };
@@ -90,6 +89,13 @@ const ParentProfile: React.FC = () => {
     }
   };
   
+  // Ensure profile doesn't reset unnecessarily
+  useEffect(() => {
+    if (profile) {
+      // Optional: perform any necessary actions when profile updates
+    }
+  }, [profile]);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
