@@ -5,9 +5,8 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import { useSupabaseAuth } from "@/context/SupabaseAuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // Define the validation schema using Zod
@@ -23,36 +22,37 @@ const ProfileForm: React.FC = () => {
   const { profile, user, updateProfile } = useSupabaseAuth();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Use local state to persist form data
-  const [formValues, setFormValues] = useState({
-    name: profile?.name || "",
-    surname: profile?.surname || "",
-    email: user?.email || "",
-    phone: profile?.phone || "",
-    idNumber: profile?.idNumber || "",
+  // Track whether the form has been initialized
+  const [isFormInitialized, setIsFormInitialized] = useState(false);
+
+  // Initialize react-hook-form
+  const form = useForm<z.infer<typeof profileSchema>>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: "",
+      surname: "",
+      email: "",
+      phone: "",
+      idNumber: "",
+    },
+    mode: "onChange",
   });
 
-  // Update formValues when profile or user data changes
+  // Update form only when profile/user data is ready for the first time
   useEffect(() => {
-    if (profile && user) {
-      setFormValues({
+    if (profile && user && !isFormInitialized) {
+      form.reset({
         name: profile.name || "",
         surname: profile.surname || "",
         email: user.email || "",
         phone: profile.phone || "",
         idNumber: profile.idNumber || "",
       });
+
+      setIsFormInitialized(true); // Mark the form as initialized to prevent further resets
     }
-  }, [profile, user]);
+  }, [profile, user, form, isFormInitialized]);
 
-  // Initialize react-hook-form with the schema and form values
-  const form = useForm<z.infer<typeof profileSchema>>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: formValues,
-    mode: "onChange",
-  });
-
-  // Handle form submission
   const onSubmitProfile = async (values: z.infer<typeof profileSchema>) => {
     setIsLoading(true);
     try {
