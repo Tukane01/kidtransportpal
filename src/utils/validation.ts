@@ -175,13 +175,6 @@ export const parentRegistrationSchema = z.object({
   phone: phoneSchema,
   idNumber: idNumberSchema,
   hasChild: z.boolean(),
-  childData: z.object({
-    name: nameSchema,
-    surname: nameSchema,
-    schoolName: schoolNameSchema,
-    schoolAddress: addressSchema,
-    idNumber: z.string().optional(),
-  }).optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -197,13 +190,6 @@ export const driverRegistrationSchema = z.object({
   phone: phoneSchema,
   idNumber: idNumberSchema,
   hasCar: z.boolean(),
-  carData: z.object({
-    make: z.string().min(2, "Car make is required"),
-    model: z.string().min(2, "Car model is required"),
-    registrationNumber: vehicleRegSchema,
-    color: z.string().min(3, "Car color is required"),
-    vinNumber: z.string().min(5, "VIN number must be at least 5 characters").max(17, "VIN number must be at most 17 characters"),
-  }).optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
