@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button"; // Assuming you're using a Butt
 
 interface ProfileFormProps {
   profile: { name: string; surname: string; email: string; phone: string; idNumber: string };
+  onProfileUpdate: (data: { name: string; surname: string; email: string; phone: string; idNumber: string }) => void;
 }
 
-const ProfileForm: React.FC<ProfileFormProps> = ({ profile }) => {
-  // State for form data
+const ProfileForm: React.FC<ProfileFormProps> = ({ profile, onProfileUpdate }) => {
+  // Internal state for the form data
   const [formData, setFormData] = useState({
     name: "",
     surname: "",
@@ -16,7 +17,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile }) => {
     idNumber: "",
   });
 
-  // Sync form data with profile when profile changes
+  // Sync formData with the profile data when component mounts or when profile prop changes
   useEffect(() => {
     if (profile) {
       setFormData({
@@ -27,7 +28,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile }) => {
         idNumber: profile.idNumber || "",
       });
     }
-  }, [profile]);
+  }, [profile]); // Only run when profile changes
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,8 +42,8 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ profile }) => {
   // Handle form submit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here, you can call an API or perform any action with the form data
-    console.log("Form submitted with data:", formData);
+    // Send the updated form data back to the parent component
+    onProfileUpdate(formData);
   };
 
   return (
