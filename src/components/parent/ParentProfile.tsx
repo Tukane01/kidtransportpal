@@ -164,7 +164,7 @@ const ParentProfile: React.FC = () => {
               
               <Separator className="bg-gray-200" />
               
-              <ProfileForm profile={profile} />
+              <ProfileForm />
             </CardContent>
           </Card>
         </TabsContent>

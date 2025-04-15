@@ -78,7 +78,7 @@ const AccountActions: React.FC<AccountActionsProps> = ({ onRefresh }) => {
         <AlertDialogTrigger asChild>
           <Button variant="destructive" size="sm" className="text-white">
             <Trash2 className="h-4 w-4 mr-2" />
-            Delete Account1
+            Delete Account
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
