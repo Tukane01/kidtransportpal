@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
+import { nameSchema, phoneSchema, idNumberSchema } from '@/utils/validation';
 
 interface ProfileFormProps {
   name: string;
@@ -39,12 +40,58 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
   onCancel,
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [nameError, setNameError] = React.useState<string | null>(null);
+  const [surnameError, setSurnameError] = React.useState<string | null>(null);
+  const [phoneError, setPhoneError] = React.useState<string | null>(null);
+  const [idNumberError, setIdNumberError] = React.useState<string | null>(null);
+  
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const result = nameSchema.safeParse(e.target.value);
+    if (!result.success) {
+      setNameError(result.error.errors[0].message);
+    } else {
+      setNameError(null);
+    }
+    onNameChange(e);
+  };
+  
+  const handleSurnameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const result = nameSchema.safeParse(e.target.value);
+    if (!result.success) {
+      setSurnameError(result.error.errors[0].message);
+    } else {
+      setSurnameError(null);
+    }
+    onSurnameChange(e);
+  };
+  
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const result = phoneSchema.safeParse(e.target.value);
+    if (!result.success) {
+      setPhoneError(result.error.errors[0].message);
+    } else {
+      setPhoneError(null);
+    }
+    onPhoneChange(e);
+  };
+  
+  const handleIdNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const result = idNumberSchema.safeParse(e.target.value);
+    if (!result.success) {
+      setIdNumberError(result.error.errors[0].message);
+    } else {
+      setIdNumberError(null);
+    }
+    onIdNumberChange(e);
+  };
 
   const handlePhotoButtonClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
+
+  const isFormValid = !nameError && !surnameError && !phoneError && !idNumberError;
 
   return (
     <div className="space-y-4 bg-white p-6 rounded-lg shadow-sm border">
@@ -98,9 +145,10 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           type="text"
           id="name"
           value={name}
-          onChange={onNameChange}
+          onChange={handleNameChange}
           className="bg-white border-gray-300"
         />
+        {nameError && <p className="text-sm text-red-500 mt-1">{nameError}</p>}
       </div>
       <div>
         <Label htmlFor="surname">Surname</Label>
@@ -108,9 +156,10 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           type="text"
           id="surname"
           value={surname}
-          onChange={onSurnameChange}
+          onChange={handleSurnameChange}
           className="bg-white border-gray-300"
         />
+        {surnameError && <p className="text-sm text-red-500 mt-1">{surnameError}</p>}
       </div>
       <div>
         <Label htmlFor="phone">Phone</Label>
@@ -118,9 +167,11 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           type="text"
           id="phone"
           value={phone}
-          onChange={onPhoneChange}
+          onChange={handlePhoneChange}
           className="bg-white border-gray-300"
+          placeholder="0712345678"
         />
+        {phoneError && <p className="text-sm text-red-500 mt-1">{phoneError}</p>}
       </div>
       <div>
         <Label htmlFor="idNumber">ID Number</Label>
@@ -128,15 +179,17 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
           type="text"
           id="idNumber"
           value={idNumber}
-          onChange={onIdNumberChange}
+          onChange={handleIdNumberChange}
           className="bg-white border-gray-300"
+          placeholder="Enter your 13-digit ID number"
         />
+        {idNumberError && <p className="text-sm text-red-500 mt-1">{idNumberError}</p>}
       </div>
       <div className="flex space-x-3">
         <Button 
           onClick={onSave} 
           className="bg-green-500 hover:bg-green-600 text-white"
-          disabled={isUploading}
+          disabled={isUploading || !isFormValid}
         >
           Save Profile
         </Button>

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -9,7 +10,6 @@ import { parentRegistrationSchema } from "@/utils/validation";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Switch } from "@/components/ui/switch";
-import ChildForm, { ChildFormData } from "@/components/ChildForm";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,9 +17,6 @@ const ParentRegisterForm: React.FC = () => {
   const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [hasChild, setHasChild] = useState(false);
-  const [showChildForm, setShowChildForm] = useState(false);
-  const [childFormCompleted, setChildFormCompleted] = useState(false);
-  const [childData, setChildData] = useState<ChildFormData | null>(null);
   
   const form = useForm<z.infer<typeof parentRegistrationSchema>>({
     resolver: zodResolver(parentRegistrationSchema),
@@ -32,15 +29,17 @@ const ParentRegisterForm: React.FC = () => {
       phone: "",
       idNumber: "",
       hasChild: false,
+      childData: {
+        name: "",
+        surname: "",
+        schoolName: "",
+        schoolAddress: "",
+        idNumber: "",
+      },
     },
   });
   
   const onSubmit = async (values: z.infer<typeof parentRegistrationSchema>) => {
-    if (hasChild && !childFormCompleted) {
-      setShowChildForm(true);
-      return;
-    }
-    
     if (!hasChild) {
       toast.error("You must have a child to register as a parent");
       return;
@@ -59,7 +58,7 @@ const ParentRegisterForm: React.FC = () => {
         idNumber: values.idNumber
       });
       
-      if (success && childData) {
+      if (success && hasChild && values.childData) {
         const { data: authData } = await supabase.auth.getUser();
         
         if (authData?.user) {
@@ -67,11 +66,11 @@ const ParentRegisterForm: React.FC = () => {
             .from('children')
             .insert({
               parent_id: authData.user.id,
-              name: childData.name,
-              surname: childData.surname,
-              school_name: childData.schoolName,
-              school_address: childData.schoolAddress,
-              id_number: childData.idNumber
+              name: values.childData.name,
+              surname: values.childData.surname,
+              school_name: values.childData.schoolName,
+              school_address: values.childData.schoolAddress,
+              id_number: values.childData.idNumber || null
             });
             
           if (childError) {
@@ -99,83 +98,179 @@ const ParentRegisterForm: React.FC = () => {
     form.setValue("hasChild", checked);
   };
   
-  const handleChildFormComplete = (data: ChildFormData) => {
-    setChildData(data);
-    setChildFormCompleted(true);
-    setShowChildForm(false);
-    form.handleSubmit(onSubmit)();
-  };
-  
   return (
-    <>
-      {showChildForm ? (
-        <ChildForm onComplete={handleChildFormComplete} onCancel={() => setShowChildForm(false)} />
-      ) : (
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black">First Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter your first name" {...field} disabled={isLoading} className="bg-white text-black" />
-                  </FormControl>
-                  <FormMessage className="text-red-500" />
-                </FormItem>
-              )}
-            />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-black">First Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter your first name" {...field} disabled={isLoading} className="bg-white text-black" />
+              </FormControl>
+              <FormMessage className="text-red-500" />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="surname"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-black">Surname</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter your surname" {...field} disabled={isLoading} className="bg-white text-black" />
+              </FormControl>
+              <FormMessage className="text-red-500" />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-black">Email</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="your.email@gmail.com"
+                  type="email"
+                  {...field}
+                  disabled={isLoading}
+                  className="bg-white text-black"
+                />
+              </FormControl>
+              <FormMessage className="text-red-500" />
+            </FormItem>
+          )}
+        />
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-black">Password</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Create password" 
+                    type="password" 
+                    {...field} 
+                    disabled={isLoading}
+                    className="bg-white text-black"
+                  />
+                </FormControl>
+                <FormMessage className="text-red-500" />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-black">Confirm Password</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Confirm password" 
+                    type="password" 
+                    {...field} 
+                    disabled={isLoading}
+                    className="bg-white text-black"
+                  />
+                </FormControl>
+                <FormMessage className="text-red-500" />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <FormField
+          control={form.control}
+          name="phone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-black">Phone Number</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="0821234567" 
+                  {...field} 
+                  disabled={isLoading}
+                  className="bg-white text-black"
+                />
+              </FormControl>
+              <FormMessage className="text-red-500" />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="idNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-black">ID Number</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="Enter your 13-digit ID number" 
+                  {...field} 
+                  disabled={isLoading}
+                  className="bg-white text-black"
+                />
+              </FormControl>
+              <FormMessage className="text-red-500" />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="hasChild"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-white">
+              <div className="space-y-0.5">
+                <FormLabel className="text-black text-base">Do you have a child?</FormLabel>
+                <div className="text-sm text-gray-600">
+                  You must have at least one child to register
+                </div>
+              </div>
+              <FormControl>
+                <Switch 
+                  checked={hasChild}
+                  onCheckedChange={handleToggleHasChild}
+                  disabled={isLoading}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        
+        {!hasChild && (
+          <div className="text-red-500 text-sm flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            <span>You must have at least one child to register</span>
+          </div>
+        )}
+
+        {hasChild && (
+          <div className="border p-4 rounded-lg bg-gray-50 space-y-4">
+            <h3 className="font-medium text-lg">Child Information</h3>
             
-            <FormField
-              control={form.control}
-              name="surname"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black">Surname</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter your surname" {...field} disabled={isLoading} className="bg-white text-black" />
-                  </FormControl>
-                  <FormMessage className="text-red-500" />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-black">Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="your.email@gmail.com"
-                      type="email"
-                      {...field}
-                      disabled={isLoading}
-                      className="bg-white text-black"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-red-500" />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="password"
+                name="childData.name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-black">Password</FormLabel>
+                    <FormLabel className="text-black">Child's First Name</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="Create password" 
-                        type="password" 
-                        {...field} 
-                        disabled={isLoading}
-                        className="bg-white text-black"
-                      />
+                      <Input {...field} disabled={isLoading} className="bg-white text-black" />
                     </FormControl>
                     <FormMessage className="text-red-500" />
                   </FormItem>
@@ -184,18 +279,12 @@ const ParentRegisterForm: React.FC = () => {
               
               <FormField
                 control={form.control}
-                name="confirmPassword"
+                name="childData.surname"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-black">Confirm Password</FormLabel>
+                    <FormLabel className="text-black">Child's Surname</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="Confirm password" 
-                        type="password" 
-                        {...field} 
-                        disabled={isLoading}
-                        className="bg-white text-black"
-                      />
+                      <Input {...field} disabled={isLoading} className="bg-white text-black" />
                     </FormControl>
                     <FormMessage className="text-red-500" />
                   </FormItem>
@@ -205,17 +294,12 @@ const ParentRegisterForm: React.FC = () => {
             
             <FormField
               control={form.control}
-              name="phone"
+              name="childData.idNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-black">Phone Number</FormLabel>
+                  <FormLabel className="text-black">Child's ID Number (Optional)</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="0821234567" 
-                      {...field} 
-                      disabled={isLoading}
-                      className="bg-white text-black"
-                    />
+                    <Input {...field} disabled={isLoading} className="bg-white text-black" />
                   </FormControl>
                   <FormMessage className="text-red-500" />
                 </FormItem>
@@ -224,17 +308,12 @@ const ParentRegisterForm: React.FC = () => {
             
             <FormField
               control={form.control}
-              name="idNumber"
+              name="childData.schoolName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-black">ID Number</FormLabel>
+                  <FormLabel className="text-black">School Name</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="Enter your 13-digit ID number" 
-                      {...field} 
-                      disabled={isLoading}
-                      className="bg-white text-black"
-                    />
+                    <Input {...field} disabled={isLoading} className="bg-white text-black" />
                   </FormControl>
                   <FormMessage className="text-red-500" />
                 </FormItem>
@@ -243,51 +322,36 @@ const ParentRegisterForm: React.FC = () => {
             
             <FormField
               control={form.control}
-              name="hasChild"
+              name="childData.schoolAddress"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 bg-white">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-black text-base">Do you have a child?</FormLabel>
-                    <div className="text-sm text-gray-600">
-                      You must have at least one child to register
-                    </div>
-                  </div>
+                <FormItem>
+                  <FormLabel className="text-black">School Address</FormLabel>
                   <FormControl>
-                    <Switch 
-                      checked={hasChild}
-                      onCheckedChange={handleToggleHasChild}
-                      disabled={isLoading}
-                    />
+                    <Input {...field} disabled={isLoading} className="bg-white text-black" />
                   </FormControl>
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />
-            
-            {!hasChild && (
-              <div className="text-red-500 text-sm flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                <span>You must have at least one child to register</span>
-              </div>
-            )}
-            
-            <Button
-              type="submit"
-              className="w-full bg-schoolride-primary hover:bg-schoolride-secondary text-white"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                  Registering...
-                </>
-              ) : (
-                "Register"
-              )}
-            </Button>
-          </form>
-        </Form>
-      )}
-    </>
+          </div>
+        )}
+        
+        <Button
+          type="submit"
+          className="w-full bg-schoolride-primary hover:bg-schoolride-secondary text-white"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+              Registering...
+            </>
+          ) : (
+            "Register"
+          )}
+        </Button>
+      </form>
+    </Form>
   );
 };
 
