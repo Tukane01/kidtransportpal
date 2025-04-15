@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -22,36 +21,40 @@ const profileSchema = z.object({
 const ProfileForm: React.FC = () => {
   const { profile, user, updateProfile } = useSupabaseAuth();
   const [isLoading, setIsLoading] = useState(false);
-  
+
+  // Wait for profile and user to be available before rendering the form
+  if (!profile || !user) {
+    return <div>Loading...</div>; // Optionally, show a loading indicator until profile and user data are available
+  }
+
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: profile?.name || "",
-      surname: profile?.surname || "",
-      email: user?.email || "",
-      phone: profile?.phone || "",
-      idNumber: profile?.idNumber || "",
-    },
-    mode: "onChange",
-  });
-
-  useEffect(() => {
-  if (profile && user) {
-    // Only reset the form if the profile or user values change.
-    form.reset({
       name: profile.name || "",
       surname: profile.surname || "",
       email: user.email || "",
       phone: profile.phone || "",
       idNumber: profile.idNumber || "",
-    });
-  }
-}, [profile, user, form]);
+    },
+    mode: "onChange",
+  });
 
-  
+  // Update form when profile changes (only reset when the values actually change)
+  useEffect(() => {
+    if (profile && user) {
+      form.reset({
+        name: profile.name || "",
+        surname: profile.surname || "",
+        email: user.email || "",
+        phone: profile.phone || "",
+        idNumber: profile.idNumber || "",
+      });
+    }
+  }, [profile, user, form]);
+
   const onSubmitProfile = async (values: z.infer<typeof profileSchema>) => {
     setIsLoading(true);
-    
+
     try {
       const { error } = await updateProfile({
         name: values.name,
@@ -59,11 +62,11 @@ const ProfileForm: React.FC = () => {
         phone: values.phone,
         idNumber: values.idNumber,
       });
-      
+
       if (error) {
         throw error;
       }
-      
+
       toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -72,7 +75,7 @@ const ProfileForm: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitProfile)} className="space-y-4">
@@ -84,18 +87,18 @@ const ProfileForm: React.FC = () => {
               <FormItem>
                 <FormLabel className="text-gray-700">First Name</FormLabel>
                 <FormControl>
-                  <Input 
-                    {...field} 
-                    disabled={isLoading} 
+                  <Input
+                    {...field}
+                    disabled={isLoading}
                     className="bg-white text-gray-800 border-gray-300"
-                    placeholder="Enter your first name" 
+                    placeholder="Enter your first name"
                   />
                 </FormControl>
                 <FormMessage className="text-red-600" />
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="surname"
@@ -103,10 +106,10 @@ const ProfileForm: React.FC = () => {
               <FormItem>
                 <FormLabel className="text-gray-700">Surname</FormLabel>
                 <FormControl>
-                  <Input 
-                    {...field} 
-                    disabled={isLoading} 
-                    className="bg-white text-gray-800 border-gray-300" 
+                  <Input
+                    {...field}
+                    disabled={isLoading}
+                    className="bg-white text-gray-800 border-gray-300"
                     placeholder="Enter your surname"
                   />
                 </FormControl>
@@ -115,7 +118,7 @@ const ProfileForm: React.FC = () => {
             )}
           />
         </div>
-        
+
         <FormField
           control={form.control}
           name="email"
@@ -129,7 +132,7 @@ const ProfileForm: React.FC = () => {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="phone"
@@ -137,10 +140,10 @@ const ProfileForm: React.FC = () => {
             <FormItem>
               <FormLabel className="text-gray-700">Phone Number</FormLabel>
               <FormControl>
-                <Input 
-                  {...field} 
-                  disabled={isLoading} 
-                  className="bg-white text-gray-800 border-gray-300" 
+                <Input
+                  {...field}
+                  disabled={isLoading}
+                  className="bg-white text-gray-800 border-gray-300"
                   placeholder="0712345678"
                 />
               </FormControl>
@@ -148,7 +151,7 @@ const ProfileForm: React.FC = () => {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="idNumber"
@@ -156,10 +159,10 @@ const ProfileForm: React.FC = () => {
             <FormItem>
               <FormLabel className="text-gray-700">ID Number</FormLabel>
               <FormControl>
-                <Input 
-                  {...field} 
-                  disabled={isLoading} 
-                  className="bg-white text-gray-800 border-gray-300" 
+                <Input
+                  {...field}
+                  disabled={isLoading}
+                  className="bg-white text-gray-800 border-gray-300"
                   placeholder="Enter your 13-digit ID number"
                 />
               </FormControl>
@@ -167,7 +170,7 @@ const ProfileForm: React.FC = () => {
             </FormItem>
           )}
         />
-        
+
         <Button
           type="submit"
           className="w-full sm:w-auto bg-schoolride-primary hover:bg-schoolride-secondary text-white"
@@ -175,7 +178,7 @@ const ProfileForm: React.FC = () => {
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Saving...
             </>
           ) : (
