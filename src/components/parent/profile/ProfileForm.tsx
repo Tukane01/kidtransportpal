@@ -35,18 +35,19 @@ const ProfileForm: React.FC = () => {
     mode: "onChange",
   });
 
-  // Update form when profile changes
   useEffect(() => {
-    if (profile && user) {
-      form.reset({
-        name: profile.name || "",
-        surname: profile.surname || "",
-        email: user.email || "",
-        phone: profile.phone || "",
-        idNumber: profile.idNumber || "",
-      });
-    }
-  }, [profile, user, form]);
+  if (profile && user) {
+    // Only reset the form if the profile or user values change.
+    form.reset({
+      name: profile.name || "",
+      surname: profile.surname || "",
+      email: user.email || "",
+      phone: profile.phone || "",
+      idNumber: profile.idNumber || "",
+    });
+  }
+}, [profile, user, form]);
+
   
   const onSubmitProfile = async (values: z.infer<typeof profileSchema>) => {
     setIsLoading(true);
