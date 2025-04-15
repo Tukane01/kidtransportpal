@@ -6,7 +6,7 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { nameSchema, phoneSchema, emailSchema } from "@/utils/validation";
+import { nameSchema, phoneSchema, emailSchema, idNumberSchema } from "@/utils/validation";
 import { useSupabaseAuth } from "@/context/SupabaseAuthContext";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -16,7 +16,7 @@ const profileSchema = z.object({
   surname: nameSchema,
   email: emailSchema,
   phone: phoneSchema,
-  idNumber: z.string().optional(),
+  idNumber: idNumberSchema.optional(),
 });
 
 const ProfileForm: React.FC = () => {
@@ -32,6 +32,7 @@ const ProfileForm: React.FC = () => {
       phone: profile?.phone || "",
       idNumber: profile?.idNumber || "",
     },
+    mode: "onChange",
   });
 
   // Update form when profile changes
@@ -82,7 +83,12 @@ const ProfileForm: React.FC = () => {
               <FormItem>
                 <FormLabel className="text-gray-700">First Name</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={isLoading} className="bg-white text-gray-800 border-gray-300" />
+                  <Input 
+                    {...field} 
+                    disabled={isLoading} 
+                    className="bg-white text-gray-800 border-gray-300"
+                    placeholder="Enter your first name" 
+                  />
                 </FormControl>
                 <FormMessage className="text-red-600" />
               </FormItem>
@@ -96,7 +102,12 @@ const ProfileForm: React.FC = () => {
               <FormItem>
                 <FormLabel className="text-gray-700">Surname</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={isLoading} className="bg-white text-gray-800 border-gray-300" />
+                  <Input 
+                    {...field} 
+                    disabled={isLoading} 
+                    className="bg-white text-gray-800 border-gray-300" 
+                    placeholder="Enter your surname"
+                  />
                 </FormControl>
                 <FormMessage className="text-red-600" />
               </FormItem>
@@ -125,7 +136,12 @@ const ProfileForm: React.FC = () => {
             <FormItem>
               <FormLabel className="text-gray-700">Phone Number</FormLabel>
               <FormControl>
-                <Input {...field} disabled={isLoading} className="bg-white text-gray-800 border-gray-300" />
+                <Input 
+                  {...field} 
+                  disabled={isLoading} 
+                  className="bg-white text-gray-800 border-gray-300" 
+                  placeholder="0712345678"
+                />
               </FormControl>
               <FormMessage className="text-red-600" />
             </FormItem>
@@ -139,7 +155,12 @@ const ProfileForm: React.FC = () => {
             <FormItem>
               <FormLabel className="text-gray-700">ID Number</FormLabel>
               <FormControl>
-                <Input {...field} disabled={isLoading} className="bg-white text-gray-800 border-gray-300" />
+                <Input 
+                  {...field} 
+                  disabled={isLoading} 
+                  className="bg-white text-gray-800 border-gray-300" 
+                  placeholder="Enter your 13-digit ID number"
+                />
               </FormControl>
               <FormMessage className="text-red-600" />
             </FormItem>
@@ -149,7 +170,7 @@ const ProfileForm: React.FC = () => {
         <Button
           type="submit"
           className="w-full sm:w-auto bg-schoolride-primary hover:bg-schoolride-secondary text-white"
-          disabled={isLoading}
+          disabled={isLoading || !form.formState.isValid}
         >
           {isLoading ? (
             <>
