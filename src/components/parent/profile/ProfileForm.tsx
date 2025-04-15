@@ -1,12 +1,11 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { nameSchema, phoneSchema, emailSchema } from "@/utils/validation";
+import { nameSchema, phoneSchema, emailSchema, idNumberSchema } from "@/utils/validation";
 import { useSupabaseAuth } from "@/context/SupabaseAuthContext";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -16,28 +15,38 @@ const profileSchema = z.object({
   surname: nameSchema,
   email: emailSchema,
   phone: phoneSchema,
-  idNumber: z.string().optional(),
+  idNumber: idNumberSchema.optional(),
 });
 
 const ProfileForm: React.FC = () => {
   const { profile, user, updateProfile } = useSupabaseAuth();
   const [isLoading, setIsLoading] = useState(false);
-  
-  const form = useForm<z.infer<typeof profileSchema>>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: {
-      name: profile?.name || "",
-      surname: profile?.surname || "",
-      email: user?.email || "",
-      phone: profile?.phone || "",
-      idNumber: profile?.idNumber || "",
-    },
+
+  // Local state to store form values independently of context data
+  const [formValues, setFormValues] = useState({
+    name: profile?.name || "",
+    surname: profile?.surname || "",
+    email: user?.email || "",
+    phone: profile?.phone || "",
+    idNumber: profile?.idNumber || "",
   });
 
-  // Update form when profile changes
+  // Debugging - Log profile and user changes
+  useEffect(() => {
+    console.log("Profile updated:", profile);
+    console.log("User updated:", user);
+  }, [profile, user]);
+
+  const form = useForm<z.infer<typeof profileSchema>>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: formValues,
+    mode: "onChange",
+  });
+
+  // Sync local state with form values manually on first load
   useEffect(() => {
     if (profile && user) {
-      form.reset({
+      setFormValues({
         name: profile.name || "",
         surname: profile.surname || "",
         email: user.email || "",
@@ -45,11 +54,11 @@ const ProfileForm: React.FC = () => {
         idNumber: profile.idNumber || "",
       });
     }
-  }, [profile, user, form]);
-  
+  }, [profile, user]);
+
   const onSubmitProfile = async (values: z.infer<typeof profileSchema>) => {
     setIsLoading(true);
-    
+
     try {
       const { error } = await updateProfile({
         name: values.name,
@@ -57,11 +66,11 @@ const ProfileForm: React.FC = () => {
         phone: values.phone,
         idNumber: values.idNumber,
       });
-      
+
       if (error) {
         throw error;
       }
-      
+
       toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -70,7 +79,7 @@ const ProfileForm: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitProfile)} className="space-y-4">
@@ -82,13 +91,18 @@ const ProfileForm: React.FC = () => {
               <FormItem>
                 <FormLabel className="text-gray-700">First Name</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={isLoading} className="bg-white text-gray-800 border-gray-300" />
+                  <Input
+                    {...field}
+                    disabled={isLoading}
+                    className="bg-white text-gray-800 border-gray-300"
+                    placeholder="Enter your first name"
+                  />
                 </FormControl>
                 <FormMessage className="text-red-600" />
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="surname"
@@ -96,14 +110,19 @@ const ProfileForm: React.FC = () => {
               <FormItem>
                 <FormLabel className="text-gray-700">Surname</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={isLoading} className="bg-white text-gray-800 border-gray-300" />
+                  <Input
+                    {...field}
+                    disabled={isLoading}
+                    className="bg-white text-gray-800 border-gray-300"
+                    placeholder="Enter your surname"
+                  />
                 </FormControl>
                 <FormMessage className="text-red-600" />
               </FormItem>
             )}
           />
         </div>
-        
+
         <FormField
           control={form.control}
           name="email"
@@ -117,7 +136,7 @@ const ProfileForm: React.FC = () => {
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="phone"
@@ -125,13 +144,18 @@ const ProfileForm: React.FC = () => {
             <FormItem>
               <FormLabel className="text-gray-700">Phone Number</FormLabel>
               <FormControl>
-                <Input {...field} disabled={isLoading} className="bg-white text-gray-800 border-gray-300" />
+                <Input
+                  {...field}
+                  disabled={isLoading}
+                  className="bg-white text-gray-800 border-gray-300"
+                  placeholder="0712345678"
+                />
               </FormControl>
               <FormMessage className="text-red-600" />
             </FormItem>
           )}
         />
-        
+
         <FormField
           control={form.control}
           name="idNumber"
@@ -139,21 +163,26 @@ const ProfileForm: React.FC = () => {
             <FormItem>
               <FormLabel className="text-gray-700">ID Number</FormLabel>
               <FormControl>
-                <Input {...field} disabled={isLoading} className="bg-white text-gray-800 border-gray-300" />
+                <Input
+                  {...field}
+                  disabled={isLoading}
+                  className="bg-white text-gray-800 border-gray-300"
+                  placeholder="Enter your 13-digit ID number"
+                />
               </FormControl>
               <FormMessage className="text-red-600" />
             </FormItem>
           )}
         />
-        
+
         <Button
           type="submit"
           className="w-full sm:w-auto bg-schoolride-primary hover:bg-schoolride-secondary text-white"
-          disabled={isLoading}
+          disabled={isLoading || !form.formState.isValid}
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Saving...
             </>
           ) : (
