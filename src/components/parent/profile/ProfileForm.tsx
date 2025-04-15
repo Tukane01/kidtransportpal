@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -6,38 +5,37 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { nameSchema, phoneSchema, emailSchema } from "@/utils/validation";
+import { Loader2 } from "lucide-react";
 import { useSupabaseAuth } from "@/context/SupabaseAuthContext";
-import { Loader2, Save } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+// Define the validation schema using Zod
 const profileSchema = z.object({
-  name: nameSchema,
-  surname: nameSchema,
-  email: emailSchema,
-  phone: phoneSchema,
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  surname: z.string().min(2, "Surname must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().optional(),
   idNumber: z.string().optional(),
 });
 
 const ProfileForm: React.FC = () => {
   const { profile, user, updateProfile } = useSupabaseAuth();
   const [isLoading, setIsLoading] = useState(false);
-  
-  const form = useForm<z.infer<typeof profileSchema>>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: {
-      name: profile?.name || "",
-      surname: profile?.surname || "",
-      email: user?.email || "",
-      phone: profile?.phone || "",
-      idNumber: profile?.idNumber || "",
-    },
+
+  // Use local state to persist form data
+  const [formValues, setFormValues] = useState({
+    name: profile?.name || "",
+    surname: profile?.surname || "",
+    email: user?.email || "",
+    phone: profile?.phone || "",
+    idNumber: profile?.idNumber || "",
   });
 
-  // Update form when profile changes
+  // Update formValues when profile or user data changes
   useEffect(() => {
     if (profile && user) {
-      form.reset({
+      setFormValues({
         name: profile.name || "",
         surname: profile.surname || "",
         email: user.email || "",
@@ -45,11 +43,18 @@ const ProfileForm: React.FC = () => {
         idNumber: profile.idNumber || "",
       });
     }
-  }, [profile, user, form]);
-  
+  }, [profile, user]);
+
+  // Initialize react-hook-form with the schema and form values
+  const form = useForm<z.infer<typeof profileSchema>>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: formValues,
+    mode: "onChange",
+  });
+
+  // Handle form submission
   const onSubmitProfile = async (values: z.infer<typeof profileSchema>) => {
     setIsLoading(true);
-    
     try {
       const { error } = await updateProfile({
         name: values.name,
@@ -57,11 +62,11 @@ const ProfileForm: React.FC = () => {
         phone: values.phone,
         idNumber: values.idNumber,
       });
-      
+
       if (error) {
         throw error;
       }
-      
+
       toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -70,11 +75,12 @@ const ProfileForm: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitProfile)} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* First Name Input */}
           <FormField
             control={form.control}
             name="name"
@@ -88,7 +94,8 @@ const ProfileForm: React.FC = () => {
               </FormItem>
             )}
           />
-          
+
+          {/* Surname Input */}
           <FormField
             control={form.control}
             name="surname"
@@ -103,7 +110,8 @@ const ProfileForm: React.FC = () => {
             )}
           />
         </div>
-        
+
+        {/* Email Input */}
         <FormField
           control={form.control}
           name="email"
@@ -117,7 +125,8 @@ const ProfileForm: React.FC = () => {
             </FormItem>
           )}
         />
-        
+
+        {/* Phone Input */}
         <FormField
           control={form.control}
           name="phone"
@@ -131,7 +140,8 @@ const ProfileForm: React.FC = () => {
             </FormItem>
           )}
         />
-        
+
+        {/* ID Number Input */}
         <FormField
           control={form.control}
           name="idNumber"
@@ -145,21 +155,20 @@ const ProfileForm: React.FC = () => {
             </FormItem>
           )}
         />
-        
+
+        {/* Submit Button */}
         <Button
           type="submit"
           className="w-full sm:w-auto bg-schoolride-primary hover:bg-schoolride-secondary text-white"
-          disabled={isLoading}
+          disabled={isLoading || !form.formState.isValid}
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-              Saving...
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
             </>
           ) : (
             <>
-              <Save className="mr-2 h-4 w-4" />
-              Save Changes
+              <Save className="mr-2 h-4 w-4" /> Save Changes
             </>
           )}
         </Button>
