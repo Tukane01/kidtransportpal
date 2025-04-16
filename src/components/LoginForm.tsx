@@ -84,7 +84,7 @@ const LoginForm: React.FC = () => {
               <FormMessage />
             </FormItem>} />
         
-        <Button type="button" variant="ghost" onClick={() => setShowPassword(!showPassword)} className="w-full p-0 h-auto text-gray-800 bg-indigo-200 hover:bg-indigo-100 rounded-sm font-semibold text-base">
+        <Button type="button" variant="ghost" onClick={() => setShowPassword(!showPassword)} className="w-full p-0 h-auto rounded-sm font-semibold text-base text-slate-100 bg-[#586daf]">
           {showPassword ? "Hide password" : "Show password"}
         </Button>
         
