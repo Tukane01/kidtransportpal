@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, ArrowLeft, MapPin, Home, School } from "lucide-react";
-import { useRide } from "@/context/RideContext";
+import { useRide, RideRequest } from "@/context/RideContext";
 
 const requestRideSchema = z.object({
   childId: z.string().min(1, "Please select a child"),

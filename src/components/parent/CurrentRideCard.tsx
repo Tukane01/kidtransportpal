@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Ride, useRide } from "@/context/RideContext";
+import { useRide, Ride } from "@/context/RideContext";
 import { Clock, MapPin, Phone, MessageCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 

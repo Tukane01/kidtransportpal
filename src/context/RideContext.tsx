@@ -3,24 +3,31 @@ import React, { createContext, useContext, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSupabaseAuth } from "./SupabaseAuthContext";
+import { Ride, RideRequest, Child, Car } from "@/types/ride";
 
 interface RideContextType {
-  rides: any[];
+  rides: Ride[];
+  children: Child[];
+  cars: Car[];
   isLoading: boolean;
   error: Error | null;
   fetchRidesByParentId: (parentId: string) => Promise<void>;
   fetchRidesByDriverId: (driverId: string) => Promise<void>;
   fetchAvailableRides: () => Promise<void>;
+  requestRide: (rideRequest: RideRequest) => Promise<boolean>;
   createRideRequest: (rideData: any) => Promise<any>;
   acceptRideRequest: (requestId: string, driverId: string) => Promise<any>;
-  updateRideStatus: (rideId: string, status: string, location?: any) => Promise<any>;
+  updateRideStatus: (rideId: string, status: Ride["status"], location?: any) => Promise<any>;
   rateRide: (rideId: string, rating: number, comment: string, isParent: boolean) => Promise<any>;
+  getCurrentRide: () => Ride | null;
 }
 
 const RideContext = createContext<RideContextType | undefined>(undefined);
 
 export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [rides, setRides] = useState<any[]>([]);
+  const [rides, setRides] = useState<Ride[]>([]);
+  const [rideChildren, setRideChildren] = useState<Child[]>([]);
+  const [cars, setCars] = useState<Car[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const { profile } = useSupabaseAuth();
@@ -30,30 +37,53 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
+      // First fetch children for this parent
+      const { data: childrenData, error: childrenError } = await supabase
+        .from('children')
+        .select('*')
+        .eq('parent_id', parentId);
+
+      if (childrenError) throw childrenError;
+
+      // Transform children data
+      const transformedChildren = childrenData.map(child => ({
+        id: child.id,
+        name: child.name,
+        surname: child.surname,
+        schoolAddress: child.school_address,
+        schoolName: child.school_name
+      }));
+
+      setRideChildren(transformedChildren);
+
+      // Fetch rides with joined data
+      const { data, error: ridesError } = await supabase
         .from('rides')
         .select(`
           *,
-          child_id (name, surname),
-          driver_id:profiles!rides_driver_id_fkey (name, surname, profile_image)
+          profiles!rides_driver_id_fkey (name, surname, profile_image),
+          children:child_id (name, surname)
         `)
         .eq('parent_id', parentId)
         .order('pickup_time', { ascending: false });
 
-      if (error) throw error;
+      if (ridesError) throw ridesError;
 
       // Transform database data to match component expectations
       const transformedRides = data.map(ride => ({
         id: ride.id,
+        parentId: ride.parent_id,
+        driverId: ride.driver_id,
+        childId: ride.child_id,
         pickupAddress: ride.pickup_address,
         dropoffAddress: ride.dropoff_address,
         pickupTime: ride.pickup_time,
         dropoffTime: ride.dropoff_time,
         status: ride.status,
         price: ride.price,
-        childName: ride.child_id ? `${ride.child_id.name} ${ride.child_id.surname}` : "Unknown",
-        driverName: ride.driver_id ? `${ride.driver_id.name} ${ride.driver_id.surname}` : "Not assigned",
-        driverImage: ride.driver_id?.profile_image || null,
+        childName: ride.children ? `${ride.children.name} ${ride.children.surname}` : "Unknown",
+        driverName: ride.profiles ? `${ride.profiles.name} ${ride.profiles.surname}` : "Not assigned",
+        driverImage: ride.profiles?.profile_image || null,
         otp: ride.otp,
         driverLocation: ride.driver_location
       }));
@@ -73,34 +103,58 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
+      // Fetch cars for the driver
+      const { data: carsData, error: carsError } = await supabase
+        .from('cars')
+        .select('*')
+        .eq('owner_id', driverId);
+
+      if (carsError) throw carsError;
+
+      const transformedCars = carsData.map(car => ({
+        id: car.id,
+        make: car.make,
+        model: car.model,
+        color: car.color,
+        registrationNumber: car.registration_number
+      }));
+
+      setCars(transformedCars);
+
+      // Fetch rides with joined data
+      const { data, error: ridesError } = await supabase
         .from('rides')
         .select(`
           *,
-          child_id (name, surname),
-          parent_id:profiles!rides_parent_id_fkey (name, surname, profile_image, phone)
+          profiles!rides_parent_id_fkey (name, surname, profile_image, phone),
+          children:child_id (name, surname)
         `)
         .eq('driver_id', driverId)
         .order('pickup_time', { ascending: false });
 
-      if (error) throw error;
+      if (ridesError) throw ridesError;
 
       // Transform database data to match component expectations
       const transformedRides = data.map(ride => ({
         id: ride.id,
+        parentId: ride.parent_id,
+        driverId: ride.driver_id,
+        childId: ride.child_id,
         pickupAddress: ride.pickup_address,
         dropoffAddress: ride.dropoff_address,
         pickupTime: ride.pickup_time,
         dropoffTime: ride.dropoff_time,
         status: ride.status,
         price: ride.price,
-        childName: ride.child_id ? `${ride.child_id.name} ${ride.child_id.surname}` : "Unknown",
-        parentName: ride.parent_id ? `${ride.parent_id.name} ${ride.parent_id.surname}` : "Unknown",
-        parentImage: ride.parent_id?.profile_image || null,
-        parentPhone: ride.parent_id?.phone || null,
+        childName: ride.children ? `${ride.children.name} ${ride.children.surname}` : "Unknown",
+        parentName: ride.profiles ? `${ride.profiles.name} ${ride.profiles.surname}` : "Unknown",
+        parentImage: ride.profiles?.profile_image || null,
+        parentPhone: ride.profiles?.phone || null,
         otp: ride.otp,
         driverLocation: ride.driver_location,
-        carDetails: "Vehicle details" // Placeholder, will need to link to driver's car
+        carDetails: transformedCars.length > 0 ? 
+          `${transformedCars[0].make} ${transformedCars[0].model} · ${transformedCars[0].color}` : 
+          "Vehicle details"
       }));
 
       setRides(transformedRides);
@@ -128,8 +182,8 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('ride_requests')
         .select(`
           *,
-          parent_id:profiles!ride_requests_parent_id_fkey (name, surname, profile_image),
-          child_id (name, surname, school_name)
+          profiles!ride_requests_parent_id_fkey (name, surname, profile_image),
+          children:child_id (name, surname, school_name)
         `)
         .eq('status', 'requested')
         .order('pickup_time', { ascending: true });
@@ -139,15 +193,17 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Transform database data to match component expectations
       const transformedRides = data.map(request => ({
         id: request.id,
+        parentId: request.parent_id,
+        childId: request.child_id,
         pickupAddress: request.pickup_address,
         dropoffAddress: request.dropoff_address,
         pickupTime: request.pickup_time,
         status: request.status,
         price: request.price,
-        childName: request.child_id ? `${request.child_id.name} ${request.child_id.surname}` : "Unknown",
-        schoolName: request.child_id?.school_name || "Unknown school",
-        parentName: request.parent_id ? `${request.parent_id.name} ${request.parent_id.surname}` : "Unknown",
-        parentImage: request.parent_id?.profile_image || null
+        childName: request.children ? `${request.children.name} ${request.children.surname}` : "Unknown",
+        schoolName: request.children?.school_name || "Unknown school",
+        parentName: request.profiles ? `${request.profiles.name} ${request.profiles.surname}` : "Unknown",
+        parentImage: request.profiles?.profile_image || null
       }));
 
       setRides(transformedRides);
@@ -174,7 +230,7 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
           pickup_address: rideData.pickupAddress,
           dropoff_address: rideData.dropoffAddress,
           pickup_time: rideData.pickupTime,
-          price: rideData.price,
+          price: rideData.price || 150, // Default price if not provided
           status: 'requested'
         })
         .select();
@@ -192,6 +248,30 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
     }
   }, []);
+
+  const requestRide = useCallback(async (rideRequest: RideRequest): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      const price = rideRequest.price || 150; // Default price if not provided
+      
+      const result = await createRideRequest({
+        parentId: profile?.id,
+        childId: rideRequest.childId,
+        pickupAddress: rideRequest.pickupAddress,
+        dropoffAddress: rideRequest.dropoffAddress,
+        pickupTime: rideRequest.pickupTime.toISOString(),
+        price: price
+      });
+      
+      return !!result;
+    } catch (error) {
+      console.error("Error requesting ride:", error);
+      toast.error("Failed to request ride");
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [createRideRequest, profile]);
 
   const acceptRideRequest = useCallback(async (requestId, driverId) => {
     try {
@@ -332,11 +412,21 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 description: `Payment for ride ${rideId}`
               });
 
-            // Update driver's wallet balance
-            await supabase.rpc('increment_wallet', { 
-              user_id: rideData.driver_id, 
-              amount: rideData.price 
-            });
+            // Update driver's wallet balance manually since we can't use rpc
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('wallet_balance')
+              .eq('id', rideData.driver_id)
+              .single();
+              
+            if (profileData) {
+              await supabase
+                .from('profiles')
+                .update({ 
+                  wallet_balance: profileData.wallet_balance + rideData.price 
+                })
+                .eq('id', rideData.driver_id);
+            }
           }
         }
 
@@ -431,17 +521,31 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // Get the current active ride
+  const getCurrentRide = useCallback(() => {
+    // Find the first ride with status "accepted" or "inProgress"
+    const currentRide = rides.find(ride => 
+      ride.status === "accepted" || ride.status === "inProgress"
+    );
+    
+    return currentRide || null;
+  }, [rides]);
+
   const value = {
     rides,
+    children: rideChildren,
+    cars,
     isLoading,
     error,
     fetchRidesByParentId,
     fetchRidesByDriverId,
     fetchAvailableRides,
+    requestRide,
     createRideRequest,
     acceptRideRequest,
     updateRideStatus,
-    rateRide
+    rateRide,
+    getCurrentRide
   };
 
   return <RideContext.Provider value={value}>{children}</RideContext.Provider>;
@@ -454,3 +558,5 @@ export const useRide = () => {
   }
   return context;
 };
+
+export { type Child, type Ride, type Car, type RideRequest };
