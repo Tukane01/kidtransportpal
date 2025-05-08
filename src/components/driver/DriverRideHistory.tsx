@@ -30,7 +30,7 @@ const DriverRideHistory: React.FC = () => {
   const { profile } = useSupabaseAuth();
   const [selectedRide, setSelectedRide] = useState<string | null>(null);
   const [exportFormat, setExportFormat] = useState<"pdf" | "csv">("pdf");
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
+  const [dateRange, setDateRange] = useState({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
   });
@@ -155,7 +155,7 @@ const DriverRideHistory: React.FC = () => {
       `R ${ride.price.toFixed(2)}`,
     ]);
     
-    // Fix: Use doc.autoTable directly without casting
+    // Use doc.autoTable correctly
     doc.autoTable({
       startY: 70,
       head: [tableColumn],
@@ -213,9 +213,9 @@ const DriverRideHistory: React.FC = () => {
                           initialFocus
                           mode="range"
                           defaultMonth={dateRange?.from}
-                          selected={dateRange as any}
+                          selected={dateRange}
                           onSelect={(range) => 
-                            setDateRange(range as { from: Date; to: Date })
+                            setDateRange(range || {from: new Date(), to: new Date()})
                           }
                           numberOfMonths={2}
                         />

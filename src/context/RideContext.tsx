@@ -75,7 +75,7 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let driverImage = null;
         
         // Handle potentially null or error profiles data safely
-        if (ride.profiles && typeof ride.profiles === 'object' && !('error' in ride.profiles)) {
+        if (ride.profiles && typeof ride.profiles === 'object' && ride.profiles !== null) {
           driverName = `${ride.profiles.name || ''} ${ride.profiles.surname || ''}`.trim() || "Not assigned";
           driverImage = ride.profiles.profile_image;
         }
@@ -153,7 +153,7 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let parentPhone = null;
         
         // Handle potentially null or error profiles data safely
-        if (ride.profiles && typeof ride.profiles === 'object' && !('error' in ride.profiles)) {
+        if (ride.profiles && typeof ride.profiles === 'object' && ride.profiles !== null) {
           parentName = `${ride.profiles.name || ''} ${ride.profiles.surname || ''}`.trim() || "Unknown";
           parentImage = ride.profiles.profile_image;
           parentPhone = ride.profiles.phone;
@@ -222,7 +222,7 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let parentImage = null;
         
         // Handle potentially null or error profiles data safely
-        if (request.profiles && typeof request.profiles === 'object' && !('error' in request.profiles)) {
+        if (request.profiles && typeof request.profiles === 'object' && request.profiles !== null) {
           parentName = `${request.profiles.name || ''} ${request.profiles.surname || ''}`.trim() || "Unknown";
           parentImage = request.profiles.profile_image;
         }
