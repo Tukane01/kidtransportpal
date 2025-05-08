@@ -20,8 +20,8 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <SupabaseAuthProvider>
-        <BrowserRouter>
+      <BrowserRouter>
+        <SupabaseAuthProvider>
           <AuthProvider>
             <UIProvider>
               <RideProvider>
@@ -37,8 +37,8 @@ const App = () => (
               </RideProvider>
             </UIProvider>
           </AuthProvider>
-        </BrowserRouter>
-      </SupabaseAuthProvider>
+        </SupabaseAuthProvider>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );

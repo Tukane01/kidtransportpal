@@ -159,7 +159,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
-  const refreshProfile = async (showToast: boolean = false) => {
+  const refreshProfile = async (showToast?: boolean) => {
     if (!user) return;
     
     const profileData = await fetchProfile(user.id);
@@ -170,6 +170,28 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
     }
   };
+
+  const createProfile = async (user: User, userData: any) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          name: userData.name || '',
+          surname: userData.surname || '',
+          phone: userData.phone || '',
+          id_number: userData.id_number || '0000000000', // Add default ID number as required by schema
+          role: userData.role || 'parent',
+          wallet_balance: 0
+        });
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      return null;
+    }
+  }
 
   useEffect(() => {
     const initialize = async () => {

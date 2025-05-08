@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuth } from "./AuthContext";
@@ -37,6 +36,9 @@ export interface Ride {
   parentRating?: number;
   driverRating?: number;
   currentLocation?: { lat: number; lng: number };
+  childName?: string;
+  driverName?: string;
+  carDetails?: string;
 }
 
 interface RideContextType {
@@ -54,6 +56,9 @@ interface RideContextType {
   requestRide: (rideData: Partial<Ride>) => Promise<boolean>;
   updateRideStatus: (rideId: string, status: Ride["status"]) => Promise<boolean>;
   getCurrentRide: () => Ride | null;
+  
+  fetchRidesByDriverId: (driverId: string) => Promise<void>;
+  fetchRidesByParentId: (parentId: string) => Promise<void>;
   
   isLoading: boolean;
 }
@@ -318,6 +323,68 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return currentRide || null;
   };
   
+  const fetchRidesByDriverId = async (driverId: string): Promise<void> => {
+    try {
+      setIsLoading(true);
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // For demonstration, we'll filter the existing rides
+      // In a real app, this would be a database query
+      const driverRides = ridesData.filter(ride => ride.driverId === driverId);
+      
+      // Here we would typically update the rides state with the filtered rides
+      // But for this mock, we'll just leave the existing rides since we're filtering client-side
+      
+      // Add child name to rides for display purposes
+      const ridesWithDetails = driverRides.map(ride => {
+        const child = childrenData.find(c => c.id === ride.childId);
+        return {
+          ...ride,
+          childName: child ? `${child.name} ${child.surname}` : "Unknown",
+          carDetails: "Vehicle information not available" // In a real app, this would be populated
+        };
+      });
+      
+      setRidesData(ridesWithDetails);
+    } catch (error) {
+      console.error("Error fetching rides by driver:", error);
+      toast.error("Failed to load ride history");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const fetchRidesByParentId = async (parentId: string): Promise<void> => {
+    try {
+      setIsLoading(true);
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // For demonstration, we'll filter the existing rides
+      // In a real app, this would be a database query
+      const parentRides = ridesData.filter(ride => ride.parentId === parentId);
+      
+      // Add child and driver name to rides for display purposes
+      const ridesWithDetails = parentRides.map(ride => {
+        const child = childrenData.find(c => c.id === ride.childId);
+        return {
+          ...ride,
+          childName: child ? `${child.name} ${child.surname}` : "Unknown",
+          driverName: "Driver information not available", // In a real app, this would be populated
+          carDetails: "Vehicle information not available" // In a real app, this would be populated
+        };
+      });
+      
+      setRidesData(ridesWithDetails);
+    } catch (error) {
+      console.error("Error fetching rides by parent:", error);
+      toast.error("Failed to load ride history");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   const value = {
     children: childrenData,
     addChild,
@@ -333,6 +400,9 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
     requestRide,
     updateRideStatus,
     getCurrentRide,
+    
+    fetchRidesByDriverId,
+    fetchRidesByParentId,
     
     isLoading
   };
