@@ -16,7 +16,7 @@ export type Database = {
           id: string
           make: string
           model: string
-          owner_id: string
+          owner_id: string | null
           owner_id_number: string
           registration_number: string
           updated_at: string | null
@@ -28,7 +28,7 @@ export type Database = {
           id?: string
           make: string
           model: string
-          owner_id: string
+          owner_id?: string | null
           owner_id_number: string
           registration_number: string
           updated_at?: string | null
@@ -40,7 +40,7 @@ export type Database = {
           id?: string
           make?: string
           model?: string
-          owner_id?: string
+          owner_id?: string | null
           owner_id_number?: string
           registration_number?: string
           updated_at?: string | null
@@ -58,7 +58,7 @@ export type Database = {
           school_address: string
           school_name: string
           surname: string
-          updated_at: string | null
+          updated_at: string
         }
         Insert: {
           created_at?: string | null
@@ -69,7 +69,7 @@ export type Database = {
           school_address: string
           school_name: string
           surname: string
-          updated_at?: string | null
+          updated_at?: string
         }
         Update: {
           created_at?: string | null
@@ -80,15 +80,23 @@ export type Database = {
           school_address?: string
           school_name?: string
           surname?: string
-          updated_at?: string | null
+          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "children_parent_id_fkey1"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
           created_at: string | null
           id: string
-          id_number: string | null
+          id_number: string
           name: string | null
           phone: string | null
           profile_image: string | null
@@ -100,7 +108,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id: string
-          id_number?: string | null
+          id_number: string
           name?: string | null
           phone?: string | null
           profile_image?: string | null
@@ -112,7 +120,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
-          id_number?: string | null
+          id_number?: string
           name?: string | null
           phone?: string | null
           profile_image?: string | null
@@ -129,6 +137,10 @@ export type Database = {
     }
     Functions: {
       delete_user: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      deleteuser: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

@@ -12,6 +12,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 import AuthWrapper from "./components/AuthWrapper";
+import AuthGuard from "./components/AuthGuard";
+import AdminDashboard from "./components/admin/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -26,9 +28,10 @@ const App = () => (
               <Sonner />
               <BrowserRouter>
                 <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/dashboard" element={<Layout />} />
-                  <Route path="/auth" element={<AuthWrapper />} />
+                  <Route path="/" element={<AuthGuard requireAuth={false}><Index /></AuthGuard>} />
+                  <Route path="/dashboard" element={<AuthGuard><Layout /></AuthGuard>} />
+                  <Route path="/auth" element={<AuthGuard requireAuth={false}><AuthWrapper /></AuthGuard>} />
+                  <Route path="/admin" element={<AuthGuard requiredRole="parent"><AdminDashboard /></AuthGuard>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
