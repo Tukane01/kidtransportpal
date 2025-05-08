@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
@@ -25,6 +24,13 @@ import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+
+// Extend the jsPDF type to include autoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
 
 // Ride item component
 const RideItem = ({ ride }) => {
@@ -168,7 +174,7 @@ const ParentRideHistory = () => {
       `R${ride.price.toFixed(2)}`,
     ]);
     
-    (doc as any).autoTable({
+    doc.autoTable({
       startY: filterText.length > 0 ? 35 : 30,
       head: [tableColumn],
       body: tableRows,

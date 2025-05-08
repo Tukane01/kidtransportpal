@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +17,13 @@ import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// Extend the jsPDF type to include autoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+  }
+}
 
 const DriverRideHistory: React.FC = () => {
   const { rides, fetchRidesByDriverId } = useRide();
@@ -149,7 +155,7 @@ const DriverRideHistory: React.FC = () => {
       `R ${ride.price.toFixed(2)}`,
     ]);
     
-    // Fixed: Removed 'new' keyword and generic type arguments from autoTable call
+    // Fix: Use doc.autoTable directly without casting
     doc.autoTable({
       startY: 70,
       head: [tableColumn],

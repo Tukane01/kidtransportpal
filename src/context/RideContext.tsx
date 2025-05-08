@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -71,14 +70,15 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Transform database data to match component expectations
       const transformedRides = data.map(ride => {
-        // Handle potentially null or error profiles data safely
-        const driverName = ride.profiles && !("error" in ride.profiles) 
-          ? `${ride.profiles.name || ''} ${ride.profiles.surname || ''}` 
-          : "Not assigned";
+        // Check if profiles exists and is a valid object before accessing properties
+        let driverName = "Not assigned";
+        let driverImage = null;
         
-        const driverImage = ride.profiles && !("error" in ride.profiles) 
-          ? ride.profiles.profile_image 
-          : null;
+        // Handle potentially null or error profiles data safely
+        if (ride.profiles && typeof ride.profiles === 'object' && !('error' in ride.profiles)) {
+          driverName = `${ride.profiles.name || ''} ${ride.profiles.surname || ''}`.trim() || "Not assigned";
+          driverImage = ride.profiles.profile_image;
+        }
 
         return {
           id: ride.id,
@@ -91,7 +91,7 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
           dropoffTime: ride.dropoff_time,
           status: (ride.status as Ride["status"]),
           price: ride.price,
-          childName: ride.children ? `${ride.children.name} ${ride.children.surname}` : "Unknown",
+          childName: ride.children ? `${ride.children.name || ''} ${ride.children.surname || ''}`.trim() : "Unknown",
           driverName,
           driverImage,
           otp: ride.otp || "0000",
@@ -99,7 +99,7 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       });
 
-      setRides(transformedRides as Ride[]);
+      setRides(transformedRides);
     } catch (err) {
       console.error("Error fetching rides by parent ID:", err);
       setError(err instanceof Error ? err : new Error(String(err)));
@@ -147,18 +147,17 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Transform database data to match component expectations
       const transformedRides = data.map(ride => {
-        // Handle potentially null or error profiles data safely
-        const parentName = ride.profiles && !("error" in ride.profiles) 
-          ? `${ride.profiles.name || ''} ${ride.profiles.surname || ''}` 
-          : "Unknown";
+        // Check if profiles exists and is a valid object before accessing properties
+        let parentName = "Unknown";
+        let parentImage = null;
+        let parentPhone = null;
         
-        const parentImage = ride.profiles && !("error" in ride.profiles) 
-          ? ride.profiles.profile_image 
-          : null;
-          
-        const parentPhone = ride.profiles && !("error" in ride.profiles) 
-          ? ride.profiles.phone 
-          : null;
+        // Handle potentially null or error profiles data safely
+        if (ride.profiles && typeof ride.profiles === 'object' && !('error' in ride.profiles)) {
+          parentName = `${ride.profiles.name || ''} ${ride.profiles.surname || ''}`.trim() || "Unknown";
+          parentImage = ride.profiles.profile_image;
+          parentPhone = ride.profiles.phone;
+        }
 
         return {
           id: ride.id,
@@ -171,7 +170,7 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
           dropoffTime: ride.dropoff_time,
           status: (ride.status as Ride["status"]),
           price: ride.price,
-          childName: ride.children ? `${ride.children.name || ''} ${ride.children.surname || ''}` : "Unknown",
+          childName: ride.children ? `${ride.children.name || ''} ${ride.children.surname || ''}`.trim() : "Unknown",
           parentName,
           parentImage,
           parentPhone,
@@ -183,7 +182,7 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       });
 
-      setRides(transformedRides as Ride[]);
+      setRides(transformedRides);
     } catch (err) {
       console.error("Error fetching rides by driver ID:", err);
       setError(err instanceof Error ? err : new Error(String(err)));
@@ -218,14 +217,15 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Transform database data to match component expectations
       const transformedRides = data.map(request => {
-        // Handle potentially null or error profiles data safely
-        const parentName = request.profiles && !("error" in request.profiles) 
-          ? `${request.profiles.name || ''} ${request.profiles.surname || ''}` 
-          : "Unknown";
+        // Check if profiles exists and is a valid object before accessing properties
+        let parentName = "Unknown";
+        let parentImage = null;
         
-        const parentImage = request.profiles && !("error" in request.profiles) 
-          ? request.profiles.profile_image 
-          : null;
+        // Handle potentially null or error profiles data safely
+        if (request.profiles && typeof request.profiles === 'object' && !('error' in request.profiles)) {
+          parentName = `${request.profiles.name || ''} ${request.profiles.surname || ''}`.trim() || "Unknown";
+          parentImage = request.profiles.profile_image;
+        }
 
         return {
           id: request.id,
@@ -237,14 +237,14 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
           status: "requested" as Ride["status"],
           price: request.price,
           otp: "0000",  // Add a default OTP for available rides to match Ride interface
-          childName: request.children ? `${request.children.name || ''} ${request.children.surname || ''}` : "Unknown",
+          childName: request.children ? `${request.children.name || ''} ${request.children.surname || ''}`.trim() : "Unknown",
           schoolName: request.children?.school_name || "Unknown school",
           parentName,
           parentImage
         };
       });
 
-      setRides(transformedRides as Ride[]);
+      setRides(transformedRides);
     } catch (err) {
       console.error("Error fetching available rides:", err);
       setError(err instanceof Error ? err : new Error(String(err)));
@@ -474,7 +474,7 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setRides(prevRides => 
           prevRides.map(ride => 
             ride.id === rideId 
-              ? { ...ride, status, ...(location && { driverLocation: location }) }
+              ? { ...ride, status: status as Ride["status"], ...(location && { driverLocation: location }) }
               : ride
           )
         );
