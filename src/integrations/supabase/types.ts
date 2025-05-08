@@ -92,6 +92,83 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          read: boolean | null
+          receiver_id: string
+          ride_id: string | null
+          sender_id: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          read?: boolean | null
+          receiver_id: string
+          ride_id?: string | null
+          sender_id: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          read?: boolean | null
+          receiver_id?: string
+          ride_id?: string | null
+          sender_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read: boolean | null
+          reference_id: string | null
+          reference_type: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean | null
+          reference_id?: string | null
+          reference_type?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean | null
+          reference_id?: string | null
+          reference_type?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -128,6 +205,202 @@ export type Database = {
           surname?: string | null
           updated_at?: string | null
           wallet_balance?: number
+        }
+        Relationships: []
+      }
+      ratings: {
+        Row: {
+          created_at: string
+          driver_comment: string | null
+          driver_id: string | null
+          driver_rating: number | null
+          id: string
+          parent_comment: string | null
+          parent_id: string | null
+          parent_rating: number | null
+          ride_id: string
+        }
+        Insert: {
+          created_at?: string
+          driver_comment?: string | null
+          driver_id?: string | null
+          driver_rating?: number | null
+          id?: string
+          parent_comment?: string | null
+          parent_id?: string | null
+          parent_rating?: number | null
+          ride_id: string
+        }
+        Update: {
+          created_at?: string
+          driver_comment?: string | null
+          driver_id?: string | null
+          driver_rating?: number | null
+          id?: string
+          parent_comment?: string | null
+          parent_id?: string | null
+          parent_rating?: number | null
+          ride_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ratings_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ride_requests: {
+        Row: {
+          child_id: string
+          created_at: string
+          dropoff_address: string
+          id: string
+          parent_id: string
+          pickup_address: string
+          pickup_time: string
+          price: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          dropoff_address: string
+          id?: string
+          parent_id: string
+          pickup_address: string
+          pickup_time: string
+          price: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          dropoff_address?: string
+          id?: string
+          parent_id?: string
+          pickup_address?: string
+          pickup_time?: string
+          price?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ride_requests_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rides: {
+        Row: {
+          child_id: string
+          created_at: string
+          driver_id: string | null
+          driver_location: Json | null
+          dropoff_address: string
+          dropoff_time: string | null
+          id: string
+          otp: string
+          parent_id: string
+          pickup_address: string
+          pickup_time: string
+          price: number
+          request_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          driver_id?: string | null
+          driver_location?: Json | null
+          dropoff_address: string
+          dropoff_time?: string | null
+          id?: string
+          otp: string
+          parent_id: string
+          pickup_address: string
+          pickup_time: string
+          price: number
+          request_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          driver_id?: string | null
+          driver_location?: Json | null
+          dropoff_address?: string
+          dropoff_time?: string | null
+          id?: string
+          otp?: string
+          parent_id?: string
+          pickup_address?: string
+          pickup_time?: string
+          price?: number
+          request_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rides_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rides_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "ride_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          reference_id: string | null
+          reference_type: string | null
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string
+          type?: string
+          user_id?: string
         }
         Relationships: []
       }

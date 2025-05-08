@@ -1,421 +1,456 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+
+import React, { createContext, useContext, useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useAuth } from "./AuthContext";
-
-export interface Child {
-  id: string;
-  name: string;
-  surname: string;
-  idNumber: string;
-  schoolName: string;
-  schoolAddress: string;
-}
-
-export interface Car {
-  id: string;
-  make: string;
-  model: string;
-  registrationNumber: string;
-  color: string;
-  vinNumber: string;
-  ownerIdNumber: string;
-}
-
-export interface Ride {
-  id: string;
-  parentId: string;
-  childId: string;
-  driverId: string | null;
-  pickupAddress: string;
-  dropoffAddress: string;
-  pickupTime: Date;
-  status: "requested" | "accepted" | "inProgress" | "completed" | "cancelled";
-  otp: string;
-  createdAt: Date;
-  price: number;
-  parentRating?: number;
-  driverRating?: number;
-  currentLocation?: { lat: number; lng: number };
-  childName?: string;
-  driverName?: string;
-  carDetails?: string;
-}
+import { useSupabaseAuth } from "./SupabaseAuthContext";
 
 interface RideContextType {
-  children: Child[];
-  addChild: (child: Omit<Child, "id">) => Promise<boolean>;
-  updateChild: (childId: string, data: Partial<Child>) => Promise<boolean>;
-  deleteChild: (childId: string) => Promise<boolean>;
-  
-  cars: Car[];
-  addCar: (car: Omit<Car, "id">) => Promise<boolean>;
-  updateCar: (carId: string, data: Partial<Car>) => Promise<boolean>;
-  deleteCar: (carId: string) => Promise<boolean>;
-  
-  rides: Ride[];
-  requestRide: (rideData: Partial<Ride>) => Promise<boolean>;
-  updateRideStatus: (rideId: string, status: Ride["status"]) => Promise<boolean>;
-  getCurrentRide: () => Ride | null;
-  
-  fetchRidesByDriverId: (driverId: string) => Promise<void>;
-  fetchRidesByParentId: (parentId: string) => Promise<void>;
-  
+  rides: any[];
   isLoading: boolean;
+  error: Error | null;
+  fetchRidesByParentId: (parentId: string) => Promise<void>;
+  fetchRidesByDriverId: (driverId: string) => Promise<void>;
+  fetchAvailableRides: () => Promise<void>;
+  createRideRequest: (rideData: any) => Promise<any>;
+  acceptRideRequest: (requestId: string, driverId: string) => Promise<any>;
+  updateRideStatus: (rideId: string, status: string, location?: any) => Promise<any>;
+  rateRide: (rideId: string, rating: number, comment: string, isParent: boolean) => Promise<any>;
 }
 
 const RideContext = createContext<RideContextType | undefined>(undefined);
 
-// Initial empty data structures
-const INITIAL_CHILDREN: Child[] = [];
-const INITIAL_CARS: Car[] = [];
-const INITIAL_RIDES: Ride[] = [];
-
 export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser } = useAuth();
-  const [childrenData, setChildrenData] = useState<Child[]>([...INITIAL_CHILDREN]);
-  const [carsData, setCarsData] = useState<Car[]>([...INITIAL_CARS]);
-  const [ridesData, setRidesData] = useState<Ride[]>([...INITIAL_RIDES]);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // Initialize empty data structures
-  useEffect(() => {
-    if (!currentUser) return;
-    
-    // In a real app, this would be done through API calls to fetch user-specific data
-    setChildrenData([]);
-    setCarsData([]);
-    setRidesData([]);
-  }, [currentUser]);
-  
-  const addChild = async (child: Omit<Child, "id">): Promise<boolean> => {
+  const [rides, setRides] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<Error | null>(null);
+  const { profile } = useSupabaseAuth();
+
+  const fetchRidesByParentId = useCallback(async (parentId: string) => {
     try {
       setIsLoading(true);
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const newChild: Child = {
-        ...child,
-        id: `child-${Date.now()}`,
-      };
-      
-      setChildrenData(prev => [...prev, newChild]);
-      toast.success(`${child.name} has been added successfully`);
-      return true;
-    } catch (error) {
-      console.error("Error adding child:", error);
-      toast.error("Failed to add child");
-      return false;
+      setError(null);
+
+      const { data, error } = await supabase
+        .from('rides')
+        .select(`
+          *,
+          child_id (name, surname),
+          driver_id:profiles!rides_driver_id_fkey (name, surname, profile_image)
+        `)
+        .eq('parent_id', parentId)
+        .order('pickup_time', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform database data to match component expectations
+      const transformedRides = data.map(ride => ({
+        id: ride.id,
+        pickupAddress: ride.pickup_address,
+        dropoffAddress: ride.dropoff_address,
+        pickupTime: ride.pickup_time,
+        dropoffTime: ride.dropoff_time,
+        status: ride.status,
+        price: ride.price,
+        childName: ride.child_id ? `${ride.child_id.name} ${ride.child_id.surname}` : "Unknown",
+        driverName: ride.driver_id ? `${ride.driver_id.name} ${ride.driver_id.surname}` : "Not assigned",
+        driverImage: ride.driver_id?.profile_image || null,
+        otp: ride.otp,
+        driverLocation: ride.driver_location
+      }));
+
+      setRides(transformedRides);
+    } catch (err) {
+      console.error("Error fetching rides by parent ID:", err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+      toast.error("Failed to load rides");
     } finally {
       setIsLoading(false);
     }
-  };
-  
-  const updateChild = async (childId: string, data: Partial<Child>): Promise<boolean> => {
+  }, []);
+
+  const fetchRidesByDriverId = useCallback(async (driverId: string) => {
     try {
       setIsLoading(true);
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
-      setChildrenData(prev => 
-        prev.map(child => 
-          child.id === childId ? { ...child, ...data } : child
-        )
-      );
-      
-      toast.success("Child information updated");
-      return true;
-    } catch (error) {
-      console.error("Error updating child:", error);
-      toast.error("Failed to update child information");
-      return false;
+      setError(null);
+
+      const { data, error } = await supabase
+        .from('rides')
+        .select(`
+          *,
+          child_id (name, surname),
+          parent_id:profiles!rides_parent_id_fkey (name, surname, profile_image, phone)
+        `)
+        .eq('driver_id', driverId)
+        .order('pickup_time', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform database data to match component expectations
+      const transformedRides = data.map(ride => ({
+        id: ride.id,
+        pickupAddress: ride.pickup_address,
+        dropoffAddress: ride.dropoff_address,
+        pickupTime: ride.pickup_time,
+        dropoffTime: ride.dropoff_time,
+        status: ride.status,
+        price: ride.price,
+        childName: ride.child_id ? `${ride.child_id.name} ${ride.child_id.surname}` : "Unknown",
+        parentName: ride.parent_id ? `${ride.parent_id.name} ${ride.parent_id.surname}` : "Unknown",
+        parentImage: ride.parent_id?.profile_image || null,
+        parentPhone: ride.parent_id?.phone || null,
+        otp: ride.otp,
+        driverLocation: ride.driver_location,
+        carDetails: "Vehicle details" // Placeholder, will need to link to driver's car
+      }));
+
+      setRides(transformedRides);
+    } catch (err) {
+      console.error("Error fetching rides by driver ID:", err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+      toast.error("Failed to load rides");
     } finally {
       setIsLoading(false);
     }
-  };
-  
-  const deleteChild = async (childId: string): Promise<boolean> => {
+  }, []);
+
+  const fetchAvailableRides = useCallback(async () => {
     try {
       setIsLoading(true);
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 700));
-      
-      setChildrenData(prev => prev.filter(child => child.id !== childId));
-      
-      toast.success("Child removed successfully");
-      return true;
-    } catch (error) {
-      console.error("Error deleting child:", error);
-      toast.error("Failed to remove child");
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const addCar = async (car: Omit<Car, "id">): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      const newCar: Car = {
-        ...car,
-        id: `car-${Date.now()}`,
-      };
-      
-      setCarsData(prev => [...prev, newCar]);
-      toast.success(`${car.make} ${car.model} has been added successfully`);
-      return true;
-    } catch (error) {
-      console.error("Error adding car:", error);
-      toast.error("Failed to add vehicle");
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const updateCar = async (carId: string, data: Partial<Car>): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
-      setCarsData(prev => 
-        prev.map(car => 
-          car.id === carId ? { ...car, ...data } : car
-        )
-      );
-      
-      toast.success("Vehicle information updated");
-      return true;
-    } catch (error) {
-      console.error("Error updating car:", error);
-      toast.error("Failed to update vehicle information");
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const deleteCar = async (carId: string): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 700));
-      
-      setCarsData(prev => prev.filter(car => car.id !== carId));
-      
-      toast.success("Vehicle removed successfully");
-      return true;
-    } catch (error) {
-      console.error("Error deleting car:", error);
-      toast.error("Failed to remove vehicle");
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const requestRide = async (rideData: Partial<Ride>): Promise<boolean> => {
-    try {
-      if (!currentUser) return false;
-      
-      setIsLoading(true);
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Generate random 6-digit OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      
-      const newRide: Ride = {
-        id: `ride-${Date.now()}`,
-        parentId: currentUser.id,
-        childId: rideData.childId || "",
-        driverId: null, // Will be assigned when a driver accepts
-        pickupAddress: rideData.pickupAddress || "",
-        dropoffAddress: rideData.dropoffAddress || "",
-        pickupTime: rideData.pickupTime || new Date(),
-        status: "requested",
-        otp,
-        createdAt: new Date(),
-        price: Math.floor(25 + Math.random() * 30), // Random price between 25-55
-        ...rideData
-      };
-      
-      setRidesData(prev => [...prev, newRide]);
-      
-      toast.success("Ride requested successfully");
-      return true;
-    } catch (error) {
-      console.error("Error requesting ride:", error);
-      toast.error("Failed to request ride");
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const updateRideStatus = async (rideId: string, status: Ride["status"]): Promise<boolean> => {
-    try {
-      if (!currentUser) return false;
-      
-      setIsLoading(true);
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 700));
-      
-      setRidesData(prev => 
-        prev.map(ride => 
-          ride.id === rideId 
-            ? { 
-                ...ride, 
-                status,
-                // If driver is accepting the ride, assign their ID
-                driverId: status === "accepted" && currentUser.role === "driver" 
-                  ? currentUser.id 
-                  : ride.driverId
-              } 
-            : ride
-        )
-      );
-      
-      let message = "";
-      switch (status) {
-        case "accepted":
-          message = "Ride accepted";
-          break;
-        case "inProgress":
-          message = "Ride started";
-          break;
-        case "completed":
-          message = "Ride completed";
-          break;
-        case "cancelled":
-          message = "Ride cancelled";
-          break;
-        default:
-          message = "Ride status updated";
+      setError(null);
+
+      // Only drivers should see available rides
+      if (profile?.role !== 'driver') {
+        setRides([]);
+        return;
       }
-      
-      toast.success(message);
-      return true;
-    } catch (error) {
-      console.error("Error updating ride status:", error);
+
+      const { data, error } = await supabase
+        .from('ride_requests')
+        .select(`
+          *,
+          parent_id:profiles!ride_requests_parent_id_fkey (name, surname, profile_image),
+          child_id (name, surname, school_name)
+        `)
+        .eq('status', 'requested')
+        .order('pickup_time', { ascending: true });
+
+      if (error) throw error;
+
+      // Transform database data to match component expectations
+      const transformedRides = data.map(request => ({
+        id: request.id,
+        pickupAddress: request.pickup_address,
+        dropoffAddress: request.dropoff_address,
+        pickupTime: request.pickup_time,
+        status: request.status,
+        price: request.price,
+        childName: request.child_id ? `${request.child_id.name} ${request.child_id.surname}` : "Unknown",
+        schoolName: request.child_id?.school_name || "Unknown school",
+        parentName: request.parent_id ? `${request.parent_id.name} ${request.parent_id.surname}` : "Unknown",
+        parentImage: request.parent_id?.profile_image || null
+      }));
+
+      setRides(transformedRides);
+    } catch (err) {
+      console.error("Error fetching available rides:", err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+      toast.error("Failed to load available rides");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [profile]);
+
+  const createRideRequest = useCallback(async (rideData) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Insert into ride_requests table
+      const { data, error } = await supabase
+        .from('ride_requests')
+        .insert({
+          parent_id: rideData.parentId,
+          child_id: rideData.childId,
+          pickup_address: rideData.pickupAddress,
+          dropoff_address: rideData.dropoffAddress,
+          pickup_time: rideData.pickupTime,
+          price: rideData.price,
+          status: 'requested'
+        })
+        .select();
+
+      if (error) throw error;
+
+      toast.success("Ride request created successfully!");
+      return data[0];
+    } catch (err) {
+      console.error("Error creating ride request:", err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+      toast.error("Failed to create ride request");
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const acceptRideRequest = useCallback(async (requestId, driverId) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // First, update the request status
+      const { data: requestData, error: requestError } = await supabase
+        .from('ride_requests')
+        .update({ status: 'accepted' })
+        .eq('id', requestId)
+        .select();
+
+      if (requestError) throw requestError;
+      if (!requestData || requestData.length === 0) throw new Error("Request not found");
+
+      const request = requestData[0];
+
+      // Generate a random 4-digit OTP
+      const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+      // Create a new ride based on the request
+      const { data: rideData, error: rideError } = await supabase
+        .from('rides')
+        .insert({
+          request_id: requestId,
+          driver_id: driverId,
+          parent_id: request.parent_id,
+          child_id: request.child_id,
+          pickup_address: request.pickup_address,
+          dropoff_address: request.dropoff_address,
+          pickup_time: request.pickup_time,
+          status: 'accepted',
+          price: request.price,
+          otp: otp
+        })
+        .select();
+
+      if (rideError) throw rideError;
+
+      // Create notification for the parent
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: request.parent_id,
+          title: 'Ride Accepted',
+          message: 'A driver has accepted your ride request.',
+          type: 'ride_accepted',
+          reference_id: rideData[0].id,
+          reference_type: 'ride'
+        });
+
+      toast.success("Ride request accepted successfully!");
+      return rideData[0];
+    } catch (err) {
+      console.error("Error accepting ride request:", err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+      toast.error("Failed to accept ride request");
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const updateRideStatus = useCallback(async (rideId, status, location = null) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const updateData: any = { status };
+      if (location) {
+        updateData.driver_location = location;
+      }
+
+      if (status === 'completed') {
+        updateData.dropoff_time = new Date().toISOString();
+      }
+
+      const { data, error } = await supabase
+        .from('rides')
+        .update(updateData)
+        .eq('id', rideId)
+        .select();
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        // Create a notification for the parent
+        let notificationTitle = '';
+        let notificationMessage = '';
+        
+        switch (status) {
+          case 'inProgress':
+            notificationTitle = 'Ride Started';
+            notificationMessage = 'Your child\'s ride has started.';
+            break;
+          case 'completed':
+            notificationTitle = 'Ride Completed';
+            notificationMessage = 'Your child\'s ride has been completed.';
+            break;
+          case 'cancelled':
+            notificationTitle = 'Ride Cancelled';
+            notificationMessage = 'Your scheduled ride has been cancelled.';
+            break;
+        }
+
+        if (notificationTitle) {
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: data[0].parent_id,
+              title: notificationTitle,
+              message: notificationMessage,
+              type: `ride_${status}`,
+              reference_id: rideId,
+              reference_type: 'ride'
+            });
+        }
+
+        // If ride is completed, add payment to driver's wallet
+        if (status === 'completed') {
+          const { data: rideData } = await supabase
+            .from('rides')
+            .select('price, driver_id')
+            .eq('id', rideId)
+            .single();
+
+          if (rideData && rideData.driver_id) {
+            // Add transaction record
+            await supabase
+              .from('transactions')
+              .insert({
+                user_id: rideData.driver_id,
+                type: 'ride_payment',
+                amount: rideData.price,
+                reference_id: rideId,
+                reference_type: 'ride',
+                description: `Payment for ride ${rideId}`
+              });
+
+            // Update driver's wallet balance
+            await supabase.rpc('increment_wallet', { 
+              user_id: rideData.driver_id, 
+              amount: rideData.price 
+            });
+          }
+        }
+
+        toast.success(`Ride status updated to ${status}`);
+
+        // Update local state with the new ride status
+        setRides(prevRides => 
+          prevRides.map(ride => 
+            ride.id === rideId 
+              ? { ...ride, status, ...(location && { driverLocation: location }) }
+              : ride
+          )
+        );
+      }
+
+      return data?.[0] || null;
+    } catch (err) {
+      console.error("Error updating ride status:", err);
+      setError(err instanceof Error ? err : new Error(String(err)));
       toast.error("Failed to update ride status");
-      return false;
+      return null;
     } finally {
       setIsLoading(false);
     }
-  };
-  
-  const getCurrentRide = (): Ride | null => {
-    if (!currentUser) return null;
-    
-    // Find ride that is in progress or accepted
-    const currentRide = ridesData.find(ride => 
-      (ride.status === "inProgress" || ride.status === "accepted") &&
-      (
-        (currentUser.role === "parent" && ride.parentId === currentUser.id) ||
-        (currentUser.role === "driver" && ride.driverId === currentUser.id)
-      )
-    );
-    
-    return currentRide || null;
-  };
-  
-  const fetchRidesByDriverId = async (driverId: string): Promise<void> => {
+  }, []);
+
+  const rateRide = useCallback(async (rideId, rating, comment, isParent) => {
     try {
       setIsLoading(true);
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setError(null);
+
+      // Get ride details to make sure the user has permission to rate
+      const { data: rideData, error: rideError } = await supabase
+        .from('rides')
+        .select('parent_id, driver_id')
+        .eq('id', rideId)
+        .single();
+
+      if (rideError) throw rideError;
+
+      // Check if rating exists
+      const { data: existingRating, error: ratingCheckError } = await supabase
+        .from('ratings')
+        .select('*')
+        .eq('ride_id', rideId)
+        .maybeSingle();
       
-      // For demonstration, we'll filter the existing rides
-      // In a real app, this would be a database query
-      const driverRides = ridesData.filter(ride => ride.driverId === driverId);
-      
-      // Here we would typically update the rides state with the filtered rides
-      // But for this mock, we'll just leave the existing rides since we're filtering client-side
-      
-      // Add child name to rides for display purposes
-      const ridesWithDetails = driverRides.map(ride => {
-        const child = childrenData.find(c => c.id === ride.childId);
-        return {
-          ...ride,
-          childName: child ? `${child.name} ${child.surname}` : "Unknown",
-          carDetails: "Vehicle information not available" // In a real app, this would be populated
+      if (ratingCheckError) throw ratingCheckError;
+
+      let ratingData;
+      if (existingRating) {
+        // Update existing rating
+        const updateData = isParent 
+          ? { parent_rating: rating, parent_comment: comment }
+          : { driver_rating: rating, driver_comment: comment };
+        
+        const { data, error } = await supabase
+          .from('ratings')
+          .update(updateData)
+          .eq('id', existingRating.id)
+          .select();
+        
+        if (error) throw error;
+        ratingData = data;
+      } else {
+        // Create new rating
+        const newRating = {
+          ride_id: rideId,
+          parent_id: rideData.parent_id,
+          driver_id: rideData.driver_id,
+          ...(isParent ? { parent_rating: rating, parent_comment: comment } : { driver_rating: rating, driver_comment: comment })
         };
-      });
-      
-      setRidesData(ridesWithDetails);
-    } catch (error) {
-      console.error("Error fetching rides by driver:", error);
-      toast.error("Failed to load ride history");
+        
+        const { data, error } = await supabase
+          .from('ratings')
+          .insert(newRating)
+          .select();
+        
+        if (error) throw error;
+        ratingData = data;
+      }
+
+      toast.success("Rating submitted successfully");
+      return ratingData;
+    } catch (err) {
+      console.error("Error submitting rating:", err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+      toast.error("Failed to submit rating");
+      return null;
     } finally {
       setIsLoading(false);
     }
-  };
-  
-  const fetchRidesByParentId = async (parentId: string): Promise<void> => {
-    try {
-      setIsLoading(true);
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demonstration, we'll filter the existing rides
-      // In a real app, this would be a database query
-      const parentRides = ridesData.filter(ride => ride.parentId === parentId);
-      
-      // Add child and driver name to rides for display purposes
-      const ridesWithDetails = parentRides.map(ride => {
-        const child = childrenData.find(c => c.id === ride.childId);
-        return {
-          ...ride,
-          childName: child ? `${child.name} ${child.surname}` : "Unknown",
-          driverName: "Driver information not available", // In a real app, this would be populated
-          carDetails: "Vehicle information not available" // In a real app, this would be populated
-        };
-      });
-      
-      setRidesData(ridesWithDetails);
-    } catch (error) {
-      console.error("Error fetching rides by parent:", error);
-      toast.error("Failed to load ride history");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
+  }, []);
+
   const value = {
-    children: childrenData,
-    addChild,
-    updateChild,
-    deleteChild,
-    
-    cars: carsData,
-    addCar,
-    updateCar,
-    deleteCar,
-    
-    rides: ridesData,
-    requestRide,
-    updateRideStatus,
-    getCurrentRide,
-    
-    fetchRidesByDriverId,
+    rides,
+    isLoading,
+    error,
     fetchRidesByParentId,
-    
-    isLoading
+    fetchRidesByDriverId,
+    fetchAvailableRides,
+    createRideRequest,
+    acceptRideRequest,
+    updateRideStatus,
+    rateRide
   };
-  
+
   return <RideContext.Provider value={value}>{children}</RideContext.Provider>;
 };
 
-export const useRide = (): RideContextType => {
+export const useRide = () => {
   const context = useContext(RideContext);
-  
   if (context === undefined) {
     throw new Error("useRide must be used within a RideProvider");
   }
-  
   return context;
 };

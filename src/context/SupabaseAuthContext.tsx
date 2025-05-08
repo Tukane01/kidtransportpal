@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,7 +75,8 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             name: '',
             surname: '',
             role: 'parent' as UserRole,
-            wallet_balance: 0
+            wallet_balance: 0,
+            id_number: '0000000000' // Add default ID number as required by schema
           };
           
           const { error: insertError } = await supabase
@@ -91,7 +93,8 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             name: '',
             surname: '',
             role: 'parent' as UserRole,
-            walletBalance: 0
+            walletBalance: 0,
+            idNumber: '0000000000'
           } as UserProfile;
         }
         
