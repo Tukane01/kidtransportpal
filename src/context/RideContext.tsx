@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -69,23 +70,34 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (ridesError) throw ridesError;
 
       // Transform database data to match component expectations
-      const transformedRides = data.map(ride => ({
-        id: ride.id,
-        parentId: ride.parent_id,
-        driverId: ride.driver_id,
-        childId: ride.child_id,
-        pickupAddress: ride.pickup_address,
-        dropoffAddress: ride.dropoff_address,
-        pickupTime: ride.pickup_time,
-        dropoffTime: ride.dropoff_time,
-        status: (ride.status as Ride["status"]),
-        price: ride.price,
-        childName: ride.children ? `${ride.children.name} ${ride.children.surname}` : "Unknown",
-        driverName: ride.profiles ? `${ride.profiles.name || ''} ${ride.profiles.surname || ''}` : "Not assigned",
-        driverImage: ride.profiles?.profile_image || null,
-        otp: ride.otp || "0000",
-        driverLocation: ride.driver_location
-      }));
+      const transformedRides = data.map(ride => {
+        // Handle potentially null or error profiles data safely
+        const driverName = ride.profiles && !("error" in ride.profiles) 
+          ? `${ride.profiles.name || ''} ${ride.profiles.surname || ''}` 
+          : "Not assigned";
+        
+        const driverImage = ride.profiles && !("error" in ride.profiles) 
+          ? ride.profiles.profile_image 
+          : null;
+
+        return {
+          id: ride.id,
+          parentId: ride.parent_id,
+          driverId: ride.driver_id,
+          childId: ride.child_id,
+          pickupAddress: ride.pickup_address,
+          dropoffAddress: ride.dropoff_address,
+          pickupTime: ride.pickup_time,
+          dropoffTime: ride.dropoff_time,
+          status: (ride.status as Ride["status"]),
+          price: ride.price,
+          childName: ride.children ? `${ride.children.name} ${ride.children.surname}` : "Unknown",
+          driverName,
+          driverImage,
+          otp: ride.otp || "0000",
+          driverLocation: ride.driver_location
+        };
+      });
 
       setRides(transformedRides as Ride[]);
     } catch (err) {
@@ -134,27 +146,42 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (ridesError) throw ridesError;
 
       // Transform database data to match component expectations
-      const transformedRides = data.map(ride => ({
-        id: ride.id,
-        parentId: ride.parent_id,
-        driverId: ride.driver_id,
-        childId: ride.child_id,
-        pickupAddress: ride.pickup_address,
-        dropoffAddress: ride.dropoff_address,
-        pickupTime: ride.pickup_time,
-        dropoffTime: ride.dropoff_time,
-        status: (ride.status as Ride["status"]),
-        price: ride.price,
-        childName: ride.children ? `${ride.children.name || ''} ${ride.children.surname || ''}` : "Unknown",
-        parentName: ride.profiles ? `${ride.profiles.name || ''} ${ride.profiles.surname || ''}` : "Unknown",
-        parentImage: ride.profiles?.profile_image || null,
-        parentPhone: ride.profiles?.phone || null,
-        otp: ride.otp || "0000",
-        driverLocation: ride.driver_location,
-        carDetails: transformedCars.length > 0 ? 
-          `${transformedCars[0].make} ${transformedCars[0].model} · ${transformedCars[0].color}` : 
-          "Vehicle details"
-      }));
+      const transformedRides = data.map(ride => {
+        // Handle potentially null or error profiles data safely
+        const parentName = ride.profiles && !("error" in ride.profiles) 
+          ? `${ride.profiles.name || ''} ${ride.profiles.surname || ''}` 
+          : "Unknown";
+        
+        const parentImage = ride.profiles && !("error" in ride.profiles) 
+          ? ride.profiles.profile_image 
+          : null;
+          
+        const parentPhone = ride.profiles && !("error" in ride.profiles) 
+          ? ride.profiles.phone 
+          : null;
+
+        return {
+          id: ride.id,
+          parentId: ride.parent_id,
+          driverId: ride.driver_id,
+          childId: ride.child_id,
+          pickupAddress: ride.pickup_address,
+          dropoffAddress: ride.dropoff_address,
+          pickupTime: ride.pickup_time,
+          dropoffTime: ride.dropoff_time,
+          status: (ride.status as Ride["status"]),
+          price: ride.price,
+          childName: ride.children ? `${ride.children.name || ''} ${ride.children.surname || ''}` : "Unknown",
+          parentName,
+          parentImage,
+          parentPhone,
+          otp: ride.otp || "0000",
+          driverLocation: ride.driver_location,
+          carDetails: transformedCars.length > 0 ? 
+            `${transformedCars[0].make} ${transformedCars[0].model} · ${transformedCars[0].color}` : 
+            "Vehicle details"
+        };
+      });
 
       setRides(transformedRides as Ride[]);
     } catch (err) {
@@ -190,21 +217,32 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
 
       // Transform database data to match component expectations
-      const transformedRides = data.map(request => ({
-        id: request.id,
-        parentId: request.parent_id,
-        childId: request.child_id,
-        pickupAddress: request.pickup_address,
-        dropoffAddress: request.dropoff_address,
-        pickupTime: request.pickup_time,
-        status: "requested" as Ride["status"],
-        price: request.price,
-        childName: request.children ? `${request.children.name || ''} ${request.children.surname || ''}` : "Unknown",
-        schoolName: request.children?.school_name || "Unknown school",
-        parentName: request.profiles ? `${request.profiles.name || ''} ${request.profiles.surname || ''}` : "Unknown",
-        parentImage: request.profiles?.profile_image || null,
-        otp: "0000" // Add a default OTP for available rides to match Ride interface
-      }));
+      const transformedRides = data.map(request => {
+        // Handle potentially null or error profiles data safely
+        const parentName = request.profiles && !("error" in request.profiles) 
+          ? `${request.profiles.name || ''} ${request.profiles.surname || ''}` 
+          : "Unknown";
+        
+        const parentImage = request.profiles && !("error" in request.profiles) 
+          ? request.profiles.profile_image 
+          : null;
+
+        return {
+          id: request.id,
+          parentId: request.parent_id,
+          childId: request.child_id,
+          pickupAddress: request.pickup_address,
+          dropoffAddress: request.dropoff_address,
+          pickupTime: request.pickup_time,
+          status: "requested" as Ride["status"],
+          price: request.price,
+          otp: "0000",  // Add a default OTP for available rides to match Ride interface
+          childName: request.children ? `${request.children.name || ''} ${request.children.surname || ''}` : "Unknown",
+          schoolName: request.children?.school_name || "Unknown school",
+          parentName,
+          parentImage
+        };
+      });
 
       setRides(transformedRides as Ride[]);
     } catch (err) {

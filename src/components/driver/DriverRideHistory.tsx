@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -148,7 +149,8 @@ const DriverRideHistory: React.FC = () => {
       `R ${ride.price.toFixed(2)}`,
     ]);
     
-    (doc as any).autoTable({
+    // Fixed: Removed 'new' keyword and generic type arguments from autoTable call
+    doc.autoTable({
       startY: 70,
       head: [tableColumn],
       body: tableRows,
