@@ -21,12 +21,12 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <SupabaseAuthProvider>
-        <AuthProvider>
-          <UIProvider>
-            <RideProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
+        <BrowserRouter>
+          <AuthProvider>
+            <UIProvider>
+              <RideProvider>
+                <Toaster />
+                <Sonner />
                 <Routes>
                   <Route path="/" element={<AuthGuard requireAuth={false}><Index /></AuthGuard>} />
                   <Route path="/dashboard" element={<AuthGuard><Layout /></AuthGuard>} />
@@ -34,10 +34,10 @@ const App = () => (
                   <Route path="/admin" element={<AuthGuard requiredRole="parent"><AdminDashboard /></AuthGuard>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
-              </BrowserRouter>
-            </RideProvider>
-          </UIProvider>
-        </AuthProvider>
+              </RideProvider>
+            </UIProvider>
+          </AuthProvider>
+        </BrowserRouter>
       </SupabaseAuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

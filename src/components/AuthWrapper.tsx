@@ -9,7 +9,7 @@ import RegisterOptions from "@/components/RegisterOptions";
 import ParentRegisterForm from "@/components/ParentRegisterForm";
 import DriverRegisterForm from "@/components/DriverRegisterForm";
 import { useAuth } from "@/context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
 const AuthWrapper: React.FC = () => {
@@ -17,6 +17,7 @@ const AuthWrapper: React.FC = () => {
   const [registerType, setRegisterType] = useState<"select" | "parent" | "driver">("select");
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Check if user is already authenticated and redirect to dashboard if they are
