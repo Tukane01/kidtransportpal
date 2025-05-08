@@ -35,13 +35,15 @@ export interface Ride {
   parentPhone?: string;
   driverLocation?: any;
   carDetails?: string;
+  schoolName?: string; // Adding schoolName to support available rides
 }
 
 export interface RideRequest {
-  parentId: string;
+  parentId?: string;
   childId: string;
   pickupAddress: string;
   dropoffAddress: string;
   pickupTime: Date;
   price?: number;
 }
+

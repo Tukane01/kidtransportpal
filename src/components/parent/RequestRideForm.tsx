@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -51,6 +50,7 @@ const RequestRideForm: React.FC<RequestRideFormProps> = ({ onCancel }) => {
           type: "manual", 
           message: "Pickup time must be in the future" 
         });
+        setIsLoading(false);
         return;
       }
       

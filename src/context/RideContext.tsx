@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -79,16 +78,16 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dropoffAddress: ride.dropoff_address,
         pickupTime: ride.pickup_time,
         dropoffTime: ride.dropoff_time,
-        status: ride.status,
+        status: (ride.status as Ride["status"]),
         price: ride.price,
         childName: ride.children ? `${ride.children.name} ${ride.children.surname}` : "Unknown",
-        driverName: ride.profiles ? `${ride.profiles.name} ${ride.profiles.surname}` : "Not assigned",
+        driverName: ride.profiles ? `${ride.profiles.name || ''} ${ride.profiles.surname || ''}` : "Not assigned",
         driverImage: ride.profiles?.profile_image || null,
-        otp: ride.otp,
+        otp: ride.otp || "0000",
         driverLocation: ride.driver_location
       }));
 
-      setRides(transformedRides);
+      setRides(transformedRides as Ride[]);
     } catch (err) {
       console.error("Error fetching rides by parent ID:", err);
       setError(err instanceof Error ? err : new Error(String(err)));
@@ -144,20 +143,20 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dropoffAddress: ride.dropoff_address,
         pickupTime: ride.pickup_time,
         dropoffTime: ride.dropoff_time,
-        status: ride.status,
+        status: (ride.status as Ride["status"]),
         price: ride.price,
-        childName: ride.children ? `${ride.children.name} ${ride.children.surname}` : "Unknown",
-        parentName: ride.profiles ? `${ride.profiles.name} ${ride.profiles.surname}` : "Unknown",
+        childName: ride.children ? `${ride.children.name || ''} ${ride.children.surname || ''}` : "Unknown",
+        parentName: ride.profiles ? `${ride.profiles.name || ''} ${ride.profiles.surname || ''}` : "Unknown",
         parentImage: ride.profiles?.profile_image || null,
         parentPhone: ride.profiles?.phone || null,
-        otp: ride.otp,
+        otp: ride.otp || "0000",
         driverLocation: ride.driver_location,
         carDetails: transformedCars.length > 0 ? 
           `${transformedCars[0].make} ${transformedCars[0].model} · ${transformedCars[0].color}` : 
           "Vehicle details"
       }));
 
-      setRides(transformedRides);
+      setRides(transformedRides as Ride[]);
     } catch (err) {
       console.error("Error fetching rides by driver ID:", err);
       setError(err instanceof Error ? err : new Error(String(err)));
@@ -198,15 +197,16 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
         pickupAddress: request.pickup_address,
         dropoffAddress: request.dropoff_address,
         pickupTime: request.pickup_time,
-        status: request.status,
+        status: "requested" as Ride["status"],
         price: request.price,
-        childName: request.children ? `${request.children.name} ${request.children.surname}` : "Unknown",
+        childName: request.children ? `${request.children.name || ''} ${request.children.surname || ''}` : "Unknown",
         schoolName: request.children?.school_name || "Unknown school",
-        parentName: request.profiles ? `${request.profiles.name} ${request.profiles.surname}` : "Unknown",
-        parentImage: request.profiles?.profile_image || null
+        parentName: request.profiles ? `${request.profiles.name || ''} ${request.profiles.surname || ''}` : "Unknown",
+        parentImage: request.profiles?.profile_image || null,
+        otp: "0000" // Add a default OTP for available rides to match Ride interface
       }));
 
-      setRides(transformedRides);
+      setRides(transformedRides as Ride[]);
     } catch (err) {
       console.error("Error fetching available rides:", err);
       setError(err instanceof Error ? err : new Error(String(err)));
