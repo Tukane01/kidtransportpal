@@ -1,13 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -25,6 +23,10 @@ import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+import { cn } from '@/lib/utils';
+import { DateRange } from 'react-day-picker';
+import { Ride } from '@/types/ride';
+import { exportToExcel, exportToPDF } from '@/utils/exportUtils';
 
 // Extend the jsPDF type to include autoTable
 declare module 'jspdf' {
@@ -71,10 +73,6 @@ const RideItem = ({ ride }) => {
           <p className="font-medium">{ride.driverName || 'Not assigned'}</p>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between border-t pt-4">
-        <p className="font-bold">R{ride.price.toFixed(2)}</p>
-        <Button variant="outline" size="sm">View Details</Button>
-      </CardFooter>
     </Card>
   );
 };
@@ -82,9 +80,13 @@ const RideItem = ({ ride }) => {
 const ParentRideHistory = () => {
   const { rides, fetchRidesByParentId } = useRide();
   const { profile } = useSupabaseAuth();
-  const [filteredRides, setFilteredRides] = useState([]);
-  const [date, setDate] = useState(null);
-  const [status, setStatus] = useState('all');
+  const [filteredRides, setFilteredRides] = useState<Ride[]>([]);
+  const [selectedRide, setSelectedRide] = useState<string | null>(null);
+  const [exportFormat, setExportFormat] = useState<"pdf" | "csv">("pdf");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -107,131 +109,111 @@ const ParentRideHistory = () => {
     if (rides?.length) {
       let filtered = [...rides];
       
-      if (date) {
+      if (dateRange?.from) {
         filtered = filtered.filter(ride => {
-          const rideDate = new Date(ride.pickupTime);
-          return (
-            rideDate.getDate() === date.getDate() &&
-            rideDate.getMonth() === date.getMonth() &&
-            rideDate.getFullYear() === date.getFullYear()
-          );
+          const rideDate = parseISO(ride.pickupTime);
+          return rideDate >= dateRange.from && 
+                 (!dateRange.to || rideDate <= dateRange.to);
         });
       }
       
-      if (status !== 'all') {
-        filtered = filtered.filter(ride => ride.status === status);
+      if (selectedRide && selectedRide !== 'all') {
+        filtered = filtered.filter(ride => ride.status === selectedRide);
       }
       
       setFilteredRides(filtered);
     } else {
       setFilteredRides([]);
     }
-  }, [rides, date, status]);
+  }, [rides, dateRange, selectedRide]);
 
-  const exportToExcel = () => {
-    const data = filteredRides.map(ride => ({
-      Date: format(new Date(ride.pickupTime), 'yyyy-MM-dd'),
-      Time: format(new Date(ride.pickupTime), 'h:mm a'),
-      From: ride.pickupAddress,
-      To: ride.dropoffAddress,
-      Status: ride.status,
-      Driver: ride.driverName || 'Not assigned',
-      Price: `R${ride.price.toFixed(2)}`
-    }));
-    
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Rides");
-    
-    // Generate filename with current date
-    const fileName = `ride_history_${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
-    XLSX.writeFile(wb, fileName);
-  };
-
-  const exportToPDF = () => {
-    const doc = new jsPDF();
-    
-    // Add title
-    doc.setFontSize(18);
-    doc.text("Ride History", 14, 22);
-    
-    // Add filter info
-    doc.setFontSize(11);
-    const filterText = [];
-    if (date) filterText.push(`Date: ${format(date, 'yyyy-MM-dd')}`);
-    if (status !== 'all') filterText.push(`Status: ${status}`);
-    if (filterText.length > 0) {
-      doc.text(`Filters: ${filterText.join(', ')}`, 14, 30);
+  const handleExport = () => {
+    if (exportFormat === "pdf") {
+      exportToPDF(filteredRides, dateRange, selectedRide);
+    } else {
+      exportToExcel(filteredRides);
     }
-    
-    // Add table
-    const tableColumn = ["Date", "Time", "From", "To", "Status", "Price"];
-    const tableRows = filteredRides.map(ride => [
-      format(new Date(ride.pickupTime), 'yyyy-MM-dd'),
-      format(new Date(ride.pickupTime), 'h:mm a'),
-      ride.pickupAddress.substring(0, 20) + (ride.pickupAddress.length > 20 ? "..." : ""),
-      ride.dropoffAddress.substring(0, 20) + (ride.dropoffAddress.length > 20 ? "..." : ""),
-      ride.status,
-      `R${ride.price.toFixed(2)}`,
-    ]);
-    
-    doc.autoTable({
-      startY: filterText.length > 0 ? 35 : 30,
-      head: [tableColumn],
-      body: tableRows,
-      theme: 'striped',
-      headStyles: { fillColor: [67, 97, 238] },
-    });
-    
-    // Generate filename with current date
-    const fileName = `ride_history_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
-    doc.save(fileName);
   };
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Ride History</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Ride History</h1>
+      </div>
       
       <div className="flex flex-col sm:flex-row gap-4">
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              variant="outline"
-              className="w-full sm:w-[240px] justify-start text-left font-normal"
+              id="date"
+              variant={"outline"}
+              className={cn(
+                "w-full sm:w-[300px] justify-start text-left font-normal",
+                !dateRange && "text-muted-foreground"
+              )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, 'PPP') : <span>Pick a date</span>}
+              {dateRange?.from ? (
+                dateRange.to ? (
+                  <>
+                    {format(dateRange.from, "LLL dd, y")} -{" "}
+                    {format(dateRange.to, "LLL dd, y")}
+                  </>
+                ) : (
+                  format(dateRange.from, "LLL dd, y")
+                )
+              ) : (
+                <span>Pick a date</span>
+              )}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
             <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
               initialFocus
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={setDateRange}
+              numberOfMonths={2}
             />
           </PopoverContent>
         </Popover>
         
-        <Select value={status} onValueChange={setStatus}>
+        <Select 
+          value={selectedRide || 'all'} 
+          onValueChange={setSelectedRide}
+        >
           <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Status filter" />
+            <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="all">All rides</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="inProgress">In progress</SelectItem>
             <SelectItem value="cancelled">Cancelled</SelectItem>
-            <SelectItem value="scheduled">Scheduled</SelectItem>
+            <SelectItem value="inProgress">In Progress</SelectItem>
+            <SelectItem value="accepted">Accepted</SelectItem>
           </SelectContent>
         </Select>
         
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportToExcel} disabled={filteredRides.length === 0}>
-            Export Excel
-          </Button>
-          <Button variant="outline" onClick={exportToPDF} disabled={filteredRides.length === 0}>
-            Export PDF
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Select 
+            value={exportFormat} 
+            onValueChange={(value) => setExportFormat(value as "pdf" | "csv")}
+          >
+            <SelectTrigger className="w-full sm:w-[100px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pdf">PDF</SelectItem>
+              <SelectItem value="csv">Excel</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button 
+            variant="outline" 
+            onClick={handleExport} 
+            disabled={filteredRides.length === 0}
+          >
+            Export
           </Button>
         </div>
       </div>

@@ -24,7 +24,7 @@ const Map: React.FC<MapProps> = ({ startLocation, endLocation, currentLocation, 
     }
 
     // Initialize the map
-    const mapOptions = {
+    const mapOptions: google.maps.MapOptions = {
       center: startLocation || { lat: -33.918861, lng: 18.423300 },
       zoom: 13,
       mapTypeId: google.maps.MapTypeId.ROADMAP,
