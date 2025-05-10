@@ -1,9 +1,8 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useRide } from "@/context/RideContext";
+import { useRide } from "@/context/ride";
 import { Car, Clock, MapPin, Star, Wallet } from "lucide-react";
 import DriverCurrentRide from "./DriverCurrentRide";
 import { toast } from "sonner";

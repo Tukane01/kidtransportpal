@@ -2,15 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { startOfMonth, endOfMonth } from 'date-fns';
 import { DateRange } from 'react-day-picker';
-import { useRide } from '@/context/RideContext';
+import { useRide } from '@/context/ride';
 import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 import RideHistoryFilters from './rides/RideHistoryFilters';
 import RidesList from './rides/RidesList';
 import { exportToExcel, exportToPDF } from '@/utils/exportUtils';
-
-// Install jspdf and jspdf-autotable
-<lov-add-dependency>jspdf@2.5.1</lov-add-dependency>
-<lov-add-dependency>jspdf-autotable@3.8.0</lov-add-dependency>
 
 const DriverRideHistory = () => {
   const { rides, fetchRidesByDriverId } = useRide();

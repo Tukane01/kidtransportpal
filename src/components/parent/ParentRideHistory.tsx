@@ -1,14 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
-import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns';
+import { parseISO, startOfMonth, endOfMonth } from 'date-fns';
+import { DateRange } from 'react-day-picker';
+import { useRide } from '@/context/ride';
+import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -18,69 +15,14 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useRide } from '@/context/RideContext';
-import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
-import * as XLSX from 'xlsx';
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
 import { cn } from '@/lib/utils';
-import { DateRange } from 'react-day-picker';
-import { Ride } from '@/types/ride';
 import { exportToExcel, exportToPDF } from '@/utils/exportUtils';
-
-// Extend the jsPDF type to include autoTable
-declare module 'jspdf' {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
-
-// Ride item component
-const RideItem = ({ ride }) => {
-  const date = new Date(ride.pickupTime);
-  
-  return (
-    <Card className="mb-4">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle className="text-lg">{format(date, 'MMMM d, yyyy')}</CardTitle>
-            <CardDescription>{format(date, 'h:mm a')}</CardDescription>
-          </div>
-          <div className={`px-3 py-1 rounded-full text-white text-sm font-medium ${
-            ride.status === 'completed' ? 'bg-green-500' :
-            ride.status === 'cancelled' ? 'bg-red-500' :
-            ride.status === 'inProgress' ? 'bg-blue-500' :
-            'bg-yellow-500'
-          }`}>
-            {ride.status}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-gray-500">From</p>
-            <p className="font-medium">{ride.pickupAddress}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">To</p>
-            <p className="font-medium">{ride.dropoffAddress}</p>
-          </div>
-        </div>
-        <div className="mt-2">
-          <p className="text-sm text-gray-500">Driver</p>
-          <p className="font-medium">{ride.driverName || 'Not assigned'}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
+import RidesList from '../driver/rides/RidesList';
 
 const ParentRideHistory = () => {
   const { rides, fetchRidesByParentId } = useRide();
   const { profile } = useSupabaseAuth();
-  const [filteredRides, setFilteredRides] = useState<Ride[]>([]);
+  const [filteredRides, setFilteredRides] = useState([]);
   const [selectedRide, setSelectedRide] = useState<string | null>(null);
   const [exportFormat, setExportFormat] = useState<"pdf" | "csv">("pdf");
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -156,11 +98,11 @@ const ParentRideHistory = () => {
               {dateRange?.from ? (
                 dateRange.to ? (
                   <>
-                    {format(dateRange.from, "LLL dd, y")} -{" "}
-                    {format(dateRange.to, "LLL dd, y")}
+                    {dateRange.from.toLocaleDateString()} -{" "}
+                    {dateRange.to.toLocaleDateString()}
                   </>
                 ) : (
-                  format(dateRange.from, "LLL dd, y")
+                  dateRange.from.toLocaleDateString()
                 )
               ) : (
                 <span>Pick a date</span>
@@ -218,19 +160,7 @@ const ParentRideHistory = () => {
         </div>
       </div>
       
-      {isLoading ? (
-        <div className="text-center py-8">Loading ride history...</div>
-      ) : filteredRides.length > 0 ? (
-        <div>
-          {filteredRides.map(ride => (
-            <RideItem key={ride.id} ride={ride} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-8 border rounded-lg">
-          <p className="text-muted-foreground">No rides found for the selected filters.</p>
-        </div>
-      )}
+      <RidesList rides={filteredRides} isLoading={isLoading} />
     </div>
   );
 };
