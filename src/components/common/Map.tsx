@@ -9,14 +9,130 @@ interface MapProps {
   className?: string;
 }
 
-// Mock Map component - in a real app this would use Google Maps API
+// Map component that uses Google Maps API
 const Map: React.FC<MapProps> = ({ startLocation, endLocation, currentLocation, className = "" }) => {
   const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<google.maps.Marker[]>([]);
 
   useEffect(() => {
+    // Check if the Google Maps API is loaded
+    if (!window.google || !mapRef.current) {
+      // If not loaded, load a mock map instead
+      renderMockMap();
+      return;
+    }
+
+    // Initialize the map
+    const mapOptions = {
+      center: startLocation || { lat: -33.918861, lng: 18.423300 },
+      zoom: 13,
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      mapTypeControl: false,
+      fullscreenControl: false
+    };
+
+    // Create a new map instance
+    const mapInstance = new google.maps.Map(mapRef.current, mapOptions);
+    mapInstanceRef.current = mapInstance;
+
+    // Clear any existing markers
+    markersRef.current.forEach(marker => marker.setMap(null));
+    markersRef.current = [];
+
+    // Add markers if locations are provided
+    if (startLocation) {
+      const startMarker = new google.maps.Marker({
+        position: startLocation,
+        map: mapInstance,
+        title: "Pickup",
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 7,
+          fillColor: "#4361EE",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 2
+        }
+      });
+      markersRef.current.push(startMarker);
+    }
+
+    if (endLocation) {
+      const endMarker = new google.maps.Marker({
+        position: endLocation,
+        map: mapInstance,
+        title: "Dropoff",
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 7,
+          fillColor: "#F72585",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 2
+        }
+      });
+      markersRef.current.push(endMarker);
+    }
+
+    if (currentLocation) {
+      const currentMarker = new google.maps.Marker({
+        position: currentLocation,
+        map: mapInstance,
+        title: "Current Location",
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 7,
+          fillColor: "#4CC9F0",
+          fillOpacity: 1,
+          strokeColor: "#ffffff",
+          strokeWeight: 2
+        }
+      });
+      markersRef.current.push(currentMarker);
+    }
+
+    // Draw route if start and end locations are provided
+    if (startLocation && endLocation) {
+      const directionsService = new google.maps.DirectionsService();
+      const directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: true,
+        polylineOptions: {
+          strokeColor: '#4361EE',
+          strokeWeight: 5,
+          strokeOpacity: 0.8
+        }
+      });
+      
+      directionsRenderer.setMap(mapInstance);
+      
+      directionsService.route({
+        origin: startLocation,
+        destination: endLocation,
+        travelMode: google.maps.TravelMode.DRIVING
+      }, (response, status) => {
+        if (status === google.maps.DirectionsStatus.OK && response) {
+          directionsRenderer.setDirections(response);
+          
+          // Fit the map to the route bounds
+          if (response.routes[0].bounds) {
+            mapInstance.fitBounds(response.routes[0].bounds);
+          }
+        }
+      });
+    }
+    
+    return () => {
+      // Clean up
+      markersRef.current.forEach(marker => marker.setMap(null));
+      markersRef.current = [];
+    };
+  }, [startLocation, endLocation, currentLocation]);
+
+  // Fallback function to render a mock map when Google Maps API is not available
+  const renderMockMap = () => {
     if (!mapRef.current) return;
     
-    // In a real implementation, this would initialize Google Maps
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     
@@ -102,14 +218,7 @@ const Map: React.FC<MapProps> = ({ startLocation, endLocation, currentLocation, 
     // Add map to DOM
     mapRef.current.innerHTML = "";
     mapRef.current.appendChild(canvas);
-    
-    // Cleanup function
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.innerHTML = "";
-      }
-    };
-  }, [startLocation, endLocation, currentLocation]);
+  };
   
   return (
     <Card className={`overflow-hidden ${className}`}>
@@ -120,7 +229,7 @@ const Map: React.FC<MapProps> = ({ startLocation, endLocation, currentLocation, 
         Loading map...
       </div>
       <div className="p-2 text-xs text-center text-muted-foreground">
-        Map visualization (Google Maps API would be used in production)
+        Map visualization
       </div>
     </Card>
   );

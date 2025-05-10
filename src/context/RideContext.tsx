@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -76,8 +77,9 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Handle potentially null or error profiles data safely
         if (ride.profiles && typeof ride.profiles === 'object' && ride.profiles !== null) {
-          driverName = `${ride.profiles.name || ''} ${ride.profiles.surname || ''}`.trim() || "Not assigned";
-          driverImage = ride.profiles.profile_image;
+          const profiles = ride.profiles as any;
+          driverName = `${profiles?.name || ''} ${profiles?.surname || ''}`.trim() || "Not assigned";
+          driverImage = profiles?.profile_image;
         }
 
         return {
@@ -154,9 +156,10 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Handle potentially null or error profiles data safely
         if (ride.profiles && typeof ride.profiles === 'object' && ride.profiles !== null) {
-          parentName = `${ride.profiles.name || ''} ${ride.profiles.surname || ''}`.trim() || "Unknown";
-          parentImage = ride.profiles.profile_image;
-          parentPhone = ride.profiles.phone;
+          const profiles = ride.profiles as any;
+          parentName = `${profiles?.name || ''} ${profiles?.surname || ''}`.trim() || "Unknown";
+          parentImage = profiles?.profile_image;
+          parentPhone = profiles?.phone;
         }
 
         return {
@@ -223,8 +226,9 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Handle potentially null or error profiles data safely
         if (request.profiles && typeof request.profiles === 'object' && request.profiles !== null) {
-          parentName = `${request.profiles.name || ''} ${request.profiles.surname || ''}`.trim() || "Unknown";
-          parentImage = request.profiles.profile_image;
+          const profiles = request.profiles as any;
+          parentName = `${profiles?.name || ''} ${profiles?.surname || ''}`.trim() || "Unknown";
+          parentImage = profiles?.profile_image;
         }
 
         return {
